@@ -214,6 +214,19 @@ printLine("res.3: " + res3);
 `
     });
     
+    // except()
+    methods.push({
+        title: 'except()',
+        sourceCode: `        
+var seq = Enumerable.create(2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
+    .except([2.2]);
+
+seq.each(function(x) {
+    printLine(x);
+});
+`
+    });
+    
     // first()
     methods.push({
         title: 'first()',
@@ -346,7 +359,20 @@ seq.each(function(x) {
 `
     });
     
-        // join()
+    // intersect()
+    methods.push({
+        title: 'intersect()',
+        sourceCode: `        
+var seq = Enumerable.create(44, 26, 92, 30, 71, 38)
+    .intersect([30, 59, 83, 47, 26, 4, 3]);
+
+seq.each(function(x) {
+    printLine(x);
+});
+`
+    });
+    
+    // join()
     methods.push({
         title: 'join()',
         sourceCode: `        
@@ -450,6 +476,76 @@ printLine("res.1: " + res1);
 printLine("res.2: " + res2);
 printLine("res.3: " + res3);
 printLine("res.4: " + res4);
+`
+    });
+    
+    // max()
+    methods.push({
+        title: 'max()',
+        sourceCode: `        
+var res1 = Enumerable.create(1, 3, 2)
+    .max();
+
+var res2 = Enumerable.create()
+    .max();          
+
+printLine('res.1: ' + res1);
+printLine('res.2: ' + res2);
+`
+    });
+    
+    // min()
+    methods.push({
+        title: 'min()',
+        sourceCode: `        
+var res1 = Enumerable.create(2, 1, 3)
+    .min();
+
+var res2 = Enumerable.create()
+    .min();          
+
+printLine('res.1: ' + res1);
+printLine('res.2: ' + res2);
+`
+    });
+        
+    // union()
+    methods.push({
+        title: 'union()',
+        sourceCode: `        
+var seq = Enumerable.create(5, 3, 9, 7, 5, 9, 3, 7)
+    .union([8, 3, 6, 4, 4, 9, 1, 0]);
+                         
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // where()
+    methods.push({
+        title: 'where()',
+        sourceCode: `        
+var res1 = Enumerable.create(1, 2, 3)
+    .where('x => x < 3');
+
+printLine("res.1: " + toStringList(res1));
+`
+    });
+    
+    // zip()
+    methods.push({
+        title: 'zip()',
+        sourceCode: `        
+var seq = Enumerable.create('Marcel', 'Bill', 'Albert')
+    .zip(['Kloubert', 'Gates', 'Einstein', 'Adenauer'],
+          function(firstName, lastName) {
+              return firstName + " " + lastName;
+           });
+                         
+seq.each(function(x) {
+    printLine(x);    
+});
 `
     });
     
