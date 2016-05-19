@@ -41,7 +41,7 @@ var seq2 = Enumerable.fromArray([11, 22, 33, 44]);
 ### Work with them
 
 ```javascript
-var seq = Enumerable.create(5979, 23979, null, 23979, 1781, 241279);
+var seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279);
 
 var newSeq = seq.where('x => x !== null')  // remove all elements that are (null)
                 .skip(1)  // skip one element (5979)
