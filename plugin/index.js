@@ -165,7 +165,7 @@ function toEqualityComparerSafe(equalityComparer) {
     
     return equalityComparer;
 }
-exports.toPredicateSafe = toPredicateSafe;
+exports.toEqualityComparerSafe = toEqualityComparerSafe;
 
 /**
  * Returns a value as predicate.
