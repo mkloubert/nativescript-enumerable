@@ -213,6 +213,14 @@ Enumerable.create("Marcel", "Kloubert")
 // 1, 10, 100, 2, 20, 200, 3, 30, 300
 Enumerable.create(1, 2, 3)
           .selectMany('x => [x, x * 10, x * 100]');
+
+// zip()
+// "Marcel Kloubert", "Bill Gates", "Albert Einstein"
+Enumerable.create('Marcel', 'Bill', 'Albert')
+          .zip(['Kloubert', 'Gates', 'Einstein', 'Adenauer'],
+               function(firstName, lastName) {
+                   return firstName + " " + lastName;
+               });
 ```
 
 ## Implemented "extension" methods
