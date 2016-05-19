@@ -101,6 +101,8 @@ It also contains a code editor where **you can enter own code and run it!**
 <img src="https://raw.githubusercontent.com/mkloubert/nativescript-enumerable/master/images/codeeditor2.png" width="192">
 <img src="https://raw.githubusercontent.com/mkloubert/nativescript-enumerable/master/images/codeeditor3.png" width="192">
 
+The [wiki](https://github.com/mkloubert/nativescript-enumerable/wiki/Demo-app) describes how it works.
+
 ## Examples
 
 ### Filters
