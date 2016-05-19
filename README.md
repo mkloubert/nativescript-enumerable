@@ -101,7 +101,7 @@ Enumerable.create(44, 26, 92, 30, 71, 38)
        
 // ofType()
 // '2', 'Tanja'
-Enumerable.create(1, '2', 4, 'Tanja', 3)
+Enumerable.create(1, '2', 2, 'Tanja', 3)
           .ofType('string');
           
 // union()
@@ -113,6 +113,24 @@ Enumerable.create(5, 3, 9, 7, 5, 9, 3, 7)
 // 1, 2, 3
 Enumerable.create(1, 2, 3, 4)
           .where('x => x < 4');
+```
+
+### Sort elements
+
+```javascript
+// orderBy(), thenBy()
+//
+// apple, grape, mango, banana,
+// orange, blueberry, raspberry, passionfruit
+Enumerable.create("grape", "passionfruit", "banana", "mango", 
+                  "orange", "raspberry", "apple", "blueberry")
+          .orderBy('x => x.length')
+          .thenBy('x => x');
+
+// reverse()
+// 4, 3, 2, 1
+Enumerable.create(1, 2, 3, 4)
+          .reverse();
 ```
 
 ## Implemented "extension" methods
