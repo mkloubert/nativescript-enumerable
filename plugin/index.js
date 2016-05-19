@@ -303,6 +303,63 @@ function fromArray(arr) {
 exports.fromArray = fromArray;
 
 /**
+ * Creates a new sequence from an object.
+ *
+ * @function fromObject
+ * 
+ * @param {Object} obj The object.
+ * 
+ * @return {Object} The new sequence.
+ */
+function fromObject(obj) {
+    if (arguments.length < 1) {
+        obj = {};
+    }
+    
+    var enumerable = {};
+    
+    var properties = [];
+    for (var p in obj) {
+        properties.push(p);
+    }
+    
+    var index;
+    setupEnumerable(enumerable, {
+        current: function() {
+            return obj[properties[index]];
+        },
+        
+        isValid: function() {
+            if (properties.length < 1) {
+                return false;
+            }
+            
+            var i = index;
+            if (i === undefined) {
+                i = 0;
+            }
+            
+            return properties.length - i > 0;
+        },
+        
+        key: function() { return properties[index]; },
+        
+        moveNext: function() {
+            if (index === undefined) {
+                index = -1;
+            }
+            
+            return ++index < properties.length;
+        },
+        
+        reset: function() { index = undefined; }
+    });
+    
+    return enumerable;
+}
+exports.fromObject = fromObject;
+
+/**
  * Creates a new sequence from a list of items.
  *
  * @function create

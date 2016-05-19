@@ -39,11 +39,17 @@ var seq1 = Enumerable.create(1, 'MK', true, null, {});
 // from an array / list
 var seq2 = Enumerable.fromArray([11, 22, 33, 44]);
 
+// from object
+var seq3 = Enumerable.fromArray({
+    MK: 23979,
+    TM: 5979
+});
+
 // range of numbers: 2, 3, 4, 5, 6
-var seq3 = Enumerable.range(2, 5);
+var seq4 = Enumerable.range(2, 5);
 
 // 50979 'TM' strings
-var seq4 = Enumerable.repeat('TM', 50979);
+var seq5 = Enumerable.repeat('TM', 50979);
 ```
 
 ### Work with them
