@@ -289,8 +289,8 @@ Enumerable.create(persons)
           .groupJoin(pets,
                      'person => person.name',
                      'pet => pet.owner.name',
-                     function(person, pets) {
-                         var petList = pets.aggregate(function(result, pet) {
+                     function(person, petsOfPerson) {
+                         var petList = petsOfPerson.aggregate(function(result, pet) {
                              return result += ", " + pet.name;
                          });
                      
