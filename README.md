@@ -438,5 +438,4 @@ Enumerable.create()
 ## Roadmap
 
 * cast()
-* range()
 * toLookup()
