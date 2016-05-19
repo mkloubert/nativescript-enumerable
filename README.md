@@ -88,6 +88,21 @@ instead.
 // 1, 2, 4, 3
 Enumerable.create(1, 2, 4, 2, 3)
           .distinct();
+ 
+// except()
+// 2.0, 2.1, 2.3, 2.4, 2.5
+Enumerable.create(2.0, 2.1, 2.2, 2.3, 2.4, 2.5)
+          .intersect([2.2]); 
+ 
+// intersect()
+// 26, 30
+Enumerable.create(44, 26, 92, 30, 71, 38)
+          .intersect([39, 59, 83, 47, 26, 4, 3]);
+       
+// ofType()
+// '2', 'Tanja'
+Enumerable.create(1, '2', 4, 'Tanja', 3)
+          .ofType('string');
           
 // union()
 // 5, 3, 9, 7, 8, 6, 4, 1, 0
