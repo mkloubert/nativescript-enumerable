@@ -560,10 +560,14 @@ enumerableMethods.cast = function(type) {
     }
     
     return this.select(function(x) {        
+        if (typeof x === type) {
+            return x;
+        }
+        
         if (type === null) {
             return null;
-        }       
-
+        }
+        
         switch (type) {
             case '':
                 return x;
@@ -624,6 +628,10 @@ enumerableMethods.cast = function(type) {
             case 'bool':
             case 'boolean':
                 return x ? true : false;
+                
+            case 'func':
+            case 'function':
+                return function() { return x; };
             
             default:
                 throw "Cannot not cast '" + x + "' to '" + type + "'!";
