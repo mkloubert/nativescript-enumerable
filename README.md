@@ -57,6 +57,49 @@ newSeq.each(function(item) {
 });
 ```
 
+Most methods are chainable as in [.NET](https://en.wikipedia.org/wiki/.NET_Framework) context.
+
+## Functions and lambda expression
+
+Many methods require one or more function.
+
+Instead using a function like
+
+```javascript
+.where(function(x) {
+           return x !== null;
+       })
+```
+
+you can write
+
+```javascript
+where('x => x !== null')
+```
+
+instead.
+
+## Examples
+
+### Filters
+
+```javascript
+// distinct()
+// 1, 2, 4, 3
+Enumerable.create(1, 2, 4, 2, 3)
+          .distinct();
+          
+// union()
+// 5, 3, 9, 7, 8, 6, 4, 1, 0
+Enumerable.create(5, 3, 9, 7, 5, 9, 3, 7)
+          .union([8, 3, 6, 4, 4, 9, 1, 0]);
+          
+// where()
+// 1, 2, 3
+Enumerable.create(1, 2, 3, 4)
+          .where('x => x < 4');
+```
+
 ## Implemented "extension" methods
 
 * aggregate()
