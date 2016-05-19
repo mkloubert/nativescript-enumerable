@@ -1,0 +1,39 @@
+TextView {
+    padding: 8;
+    margin-top: 16;
+    font-family: Monospace;
+}
+
+.mjk-method-name {
+    font-size: 20;
+    padding: 8;
+}
+
+.mjk-method-sourceCode {
+    background-color: black;
+    color: white;  
+}
+
+.mjk-executionResult {
+    background-color: darkgray;
+    color: white;  
+}
+
+.mjk-header {
+    font-size: 20;
+    text-align: center;
+    padding: 8;
+    color: white;
+    background-color: blue;
+    margin-top: 16;
+}
+
+.mjk-item-list {
+    margin: 8;
+    height: 128;    
+}
+
+.mjk-exec-button {
+    margin-top: 16;
+    width: 100%;
+}

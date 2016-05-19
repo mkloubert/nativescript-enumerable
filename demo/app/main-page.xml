@@ -1,0 +1,14 @@
+<Page xmlns="http://schemas.nativescript.org/tns.xsd" navigatingTo="onNavigatingTo">
+  <Page.actionBar>
+    <ActionBar title="nativescript-enumerable Demo">
+    </ActionBar>
+  </Page.actionBar>
+
+  <ListView items="{{ methods }}">
+    <ListView.itemTemplate>
+      <Label cssClass="mjk-method" 
+             text="{{ name + '()' }}"
+             tap="openScriptEditor" />
+    </ListView.itemTemplate>
+  </ListView>
+</Page>

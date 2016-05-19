@@ -1,0 +1,77 @@
+<Page xmlns="http://schemas.nativescript.org/tns.xsd"
+      loaded="onPageLoaded">
+  <Page.actionBar>
+    <ActionBar title="nativescript-enumerable script editor">
+      <NavigationButton android.systemIcon="ic_menu_back"
+                        tap="goBack" />
+    </ActionBar>
+  </Page.actionBar>
+
+  <ScrollView>
+    <GridLayout rows="auto,auto,auto">
+      <TextView row="0" cssClass="mjk-method-sourceCode"
+                id="mjk-script-textEditor"
+                text="{{ method.sourceCode }}" />
+                
+      <StackLayout row="1"
+                   visibility="{{ isExecuting ? 'collapsed' : 'visible' }}">
+                  
+          <Button cssClass="mjk-exec-button"
+                  text="Execute"
+                  tap="executeScript" />
+      
+          <!-- OUTPUT -->
+          <Label cssClass="mjk-header">
+            <Label.formattedText>
+              <FormattedString>
+                <FormattedString.spans>
+                  <Span text="Output" fontAttributes="Bold" />
+                </FormattedString.spans>
+              </FormattedString>
+            </Label.formattedText>
+          </Label>
+          <TextView cssClass="mjk-executionResult"
+                    editable="false"
+                    text="{{ executionResult }}" />
+
+      
+          <!-- result VALUE -->
+          <Label cssClass="mjk-header">
+            <Label.formattedText>
+              <FormattedString>
+                <FormattedString.spans>
+                  <Span text="Value" fontAttributes="Bold" />
+                </FormattedString.spans>
+              </FormattedString>
+            </Label.formattedText>
+          </Label>
+          <TextView text="{{ value }}"
+                    editable="false" />
+          
+          <!-- result ITEMS -->      
+          <Label cssClass="mjk-header">
+            <Label.formattedText>
+              <FormattedString>
+                <FormattedString.spans>
+                  <Span text="Items" fontAttributes="Bold" />
+                </FormattedString.spans>
+              </FormattedString>
+            </Label.formattedText>
+          </Label>
+          <ListView cssClass="mjk-item-list"
+                    items="{{ items }}">
+          
+            <ListView.itemTemplate>
+              <Label text="{{ value }}"
+                    textWrap="true" />   
+            </ListView.itemTemplate>
+          </ListView>
+      </StackLayout>          
+                
+      <ActivityIndicator row="1"
+                        width="64" height="64"
+                        visibility="{{ !isExecuting ? 'collapsed' : 'visible' }}"
+                        busy="true" />
+    </GridLayout>
+  </ScrollView>
+</Page>
