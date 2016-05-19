@@ -821,6 +821,17 @@ for (var k in lookup) {
 `
     });
     
+    // toObject()
+    methods.push({
+        title: 'toObject()',
+        sourceCode: `        
+var o = Enumerable.create('Helmut Schmidt')
+    .toObject('() => "value"');
+
+printLine(o.value);
+`
+    });
+    
     // toObservable()
     methods.push({
         title: 'toObservable()',
@@ -873,8 +884,8 @@ printLine("res.1: " + toStringList(res1));
     methods.push({
         title: 'zip()',
         sourceCode: `        
-var seq = Enumerable.create('Marcel', 'Bill', 'Albert')
-    .zip(['Kloubert', 'Gates', 'Einstein', 'Adenauer'],
+var seq = Enumerable.create('Marcel', 'Bill', 'Albert', 'Anders')
+    .zip(['Kloubert', 'Gates', 'Einstein', 'Hejlsberg', 'Adenauer'],
           function(firstName, lastName) {
               return firstName + " " + lastName;
            });
