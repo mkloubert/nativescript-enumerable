@@ -861,6 +861,13 @@ seq.each(function(x) {
 
     var examples = [];
     
+    // from scratch
+    examples.push({
+        title: 'From scratch',
+        sourceCode: ``
+    });
+    
+    // Simple example
     examples.push({
         title: 'Simple example',
         sourceCode: `        

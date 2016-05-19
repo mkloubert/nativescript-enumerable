@@ -4,7 +4,7 @@
     </ActionBar>
   </Page.actionBar>
   
-  <GridLayout rows="auto,auto,auto,*">
+  <GridLayout rows="auto,1*,auto,2*">
     <Label row="0"
            cssClass="mjk-header">
         <Label.formattedText>
