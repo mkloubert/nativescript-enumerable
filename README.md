@@ -152,7 +152,7 @@ Enumerable.create(0, 1, 2, 3, 4)
           .skip(3);
 
 // skipWhile()
-// 55, 666, 777
+// 55, 666, 77
 Enumerable.create(22, 33, 44, 55, 666, 77)
           .skipWhile('x => x < 50');
           

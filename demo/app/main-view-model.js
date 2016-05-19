@@ -551,6 +551,32 @@ seq.each(function(x) {
 `
     });
     
+    // skip()
+    methods.push({
+        title: 'skip()',
+        sourceCode: `        
+var seq = Enumerable.create(0, 1, 2, 3, 4)
+    .skip(3);
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // skipWhile()
+    methods.push({
+        title: 'skipWhile()',
+        sourceCode: `        
+var seq = Enumerable.create(22, 33, 44, 55, 666, 77)
+    .skipWhile('x => x < 50');
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
     // sum()
     methods.push({
         title: 'sum()',
