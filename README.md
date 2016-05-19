@@ -314,6 +314,29 @@ Enumerable.create(persons)
                 });
 ```
 
+### Groupings
+
+```javascript
+// groupBy()
+Enumerable.create("grape", "passionfruit", "banana",
+                  "apple", "blueberry")
+          .groupBy('x => x[0]')
+          .each(function(grouping) {
+                    // grouping[0].key = 'g'
+                    // grouping[0][0] = 'grape'
+                    
+                    // grouping[1].key = 'p'
+                    // grouping[1][0] = 'passionfruit'
+                    
+                    // grouping[2].key = 'b'
+                    // grouping[2][0] = 'banana'
+                    // grouping[2][1] = 'blueberry'
+                    
+                    // grouping[3].key = 'a'
+                    // grouping[3][0] = 'apple'
+                });
+```
+
 ### Projection
 
 ```javascript
