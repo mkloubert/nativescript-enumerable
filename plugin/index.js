@@ -8,6 +8,9 @@
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+var Observable = require("data/observable").Observable;
+var ObservableArray = require("data/observable-array").ObservableArray;
+
 var enumerableMethods = {};
 var orderedEnumerableMethods = {};
 
@@ -185,11 +188,25 @@ function toPredicateSafe(predicate) {
 exports.toPredicateSafe = toPredicateSafe;
 
 function createEnumerableContext(enumerable, index) {
-    return {
-        index: index,
-        item: enumerable.current,
-        sequence: enumerable,    
-    };
+    var eCtx = {};
+    
+    Object.defineProperty(eCtx, 'index', {
+        get: function() { return index; }
+    });
+    
+    Object.defineProperty(eCtx, 'item', {
+        get: function() { return enumerable.current; }
+    });
+    
+    Object.defineProperty(eCtx, 'key', {
+        get: function() { return enumerable.key; }
+    });
+    
+    Object.defineProperty(eCtx, 'sequence', {
+        get: function() { return enumerable; }
+    });
+    
+    return eCtx;
 }
 
 function setupEnumerable(enumerable, opts) {
@@ -208,6 +225,10 @@ function setupEnumerable(enumerable, opts) {
     
     Object.defineProperty(enumerable, 'isValid', {
         get: opts.isValid
+    });
+    
+    Object.defineProperty(enumerable, 'key', {
+        get: opts.key
     });
     
     enumerable.moveNext = opts.moveNext;
@@ -263,6 +284,8 @@ function fromArray(arr) {
             
             return arr.length - i > 0;
         },
+        
+        key: function() { return index; },
         
         moveNext: function() {
             if (index === undefined) {
@@ -1099,6 +1122,8 @@ enumerableMethods.ofType = function(type) {
 
 /**
  * Sorts the elements of that sequence in ascending order.
+ *
+ * @method orderBy
  * 
  * @param any selector The key selector.
  * @param any [comparer] The custom key comparer to use.
@@ -1143,6 +1168,8 @@ enumerableMethods.orderBy = function(selector, comparer) {
 
 /**
  * Sorts the elements of that sequence in descending order.
+ *
+ * @method orderByDescending
  * 
  * @param any selector The key selector.
  * @param any [comparer] The custom key comparer to use.
@@ -1444,6 +1471,8 @@ enumerableMethods.takeWhile = function(predicate) {
 /**
  * Returns the elements of that sequence as array.
  * 
+ * @method toArray
+ * 
  * @return {Array} The sequence as new array.
  */
 enumerableMethods.toArray = function() {
@@ -1456,9 +1485,51 @@ enumerableMethods.toArray = function() {
 };
 
 /**
+ * Creates a new observable object from the items of that sequence.
+ *
+ * @method toObservable
+ * 
+ * @param any [keySelector] The custom key selector to use.
+ * 
+ * @throws Key selector is invalid.
+ * 
+ * @return {Observable} The new object.
+ */
+enumerableMethods.toObservable = function(keySelector) {
+    if (arguments.length < 1) {
+        keySelector = function(item, index, key) {
+            return key;
+        };
+    }
+    
+    keySelector = asFunc(keySelector);
+
+    var ob = new Observable();
+    
+    this.each(function(x, index, ctx) {
+        var key = keySelector(x, index, ctx.key);
+        
+        ob.set(key, x);
+    });
+    
+    return ob;
+};
+
+/**
+ * Creates a new observable array from the items of that sequence.
+ *
+ * @method toObservableArray
+ * 
+ * @return {ObservableArray} The new array.
+ */
+enumerableMethods.toObservableArray = function() {
+    return new ObservableArray(this.toArray());
+};
+
+/**
  * Creates a lookup object from the sequence.
  *
- * @method groupBy
+ * @method toLookup
  * 
  * @param any keySelector The group key selector.
  * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
@@ -1481,6 +1552,8 @@ enumerableMethods.toLookup = function(keySelector, keyEqualityComparer) {
 /**
  * Produces the set union of that sequence and another.
  * 
+ * @method union
+ * 
  * @param any second The second sequence.
  * @param {Function} [equalityComparer] The custom equality comparer to use.
  * 
@@ -1495,6 +1568,8 @@ enumerableMethods.union = function(second, equalityComparer) {
 
 /**
  * Filters the elements of that sequence.
+ * 
+ * @method where
  * 
  * @param {Function} predicate The predicate to use.
  * 
@@ -1522,6 +1597,8 @@ enumerableMethods.where = function(predicate) {
 /**
  * Applies a specified function to the corresponding elements of that sequence
  * and another, producing a sequence of the results.
+ * 
+ * @method zip
  * 
  * @param any second The second sequence.
  * @param {Function} selector The selector for the combined result items of the elements of the two sequences.
@@ -1558,6 +1635,8 @@ enumerableMethods.zip = function(second, selector) {
 
 /**
  * Performs a subsequent ordering of the elements in that sequence in ascending order, according to a key.
+ * 
+ * @method thenBy
  * 
  * @param any selector The key selector.
  * @param any [comparer] The custom key comparer to use.
@@ -1605,6 +1684,8 @@ orderedEnumerableMethods.thenBy = function(selector, comparer) {
 
 /**
  * Performs a subsequent ordering of the elements in that sequence in descending order, according to a key.
+ * 
+ * @method thenByDescending
  * 
  * @param any selector The key selector.
  * @param any [comparer] The custom key comparer to use.

@@ -164,6 +164,23 @@ printLine("res.3: " + toStringList(res3));
 `
     });
     
+    // each()
+    methods.push({
+        title: 'each()',
+        sourceCode: `
+var i = 0;                
+var res = Enumerable.create(1, 2, 3, 2, 4)
+    .each(function(x, index) {
+        printLine(index + ": " + x);
+        
+        return ++i;    
+    });
+    
+printLine("");    
+printLine("res: " + res);
+`
+    });
+    
     // elementAt()
     methods.push({
         title: 'elementAt()',
@@ -772,6 +789,30 @@ for (var k in lookup) {
     items.each(function(x) {
         printLine("\t" + x);    
     });
+}
+`
+    });
+    
+    // toObservable()
+    methods.push({
+        title: 'toObservable()',
+        sourceCode: `        
+var o = Enumerable.create('Edward Snowden')
+    .toObservable('() => "value"');
+
+printLine(o.get("value"));
+`
+    });
+    
+    // toObservableArray()
+    methods.push({
+        title: 'toObservableArray()',
+        sourceCode: `        
+var oa = Enumerable.create(1, 2, 3)
+    .toObservableArray();
+
+for (var i = 0; i < oa.length; i++) {
+    printLine(oa.getItem(i));
 }
 `
     });

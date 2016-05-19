@@ -7,6 +7,10 @@ function executeScript(__36D7F6225B5F4B40879B87355C0AB2F0,
                        __F5B18AC600944FA5AA22262C7B3F79DB) {
     
     var print = function(msg) {
+        if (arguments.length < 1) {
+            msg = "";
+        }
+        
         var vm = __F5B18AC600944FA5AA22262C7B3F79DB;
         
         console.log("executeSource(): " + msg);
