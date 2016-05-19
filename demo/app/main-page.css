@@ -5,3 +5,11 @@
     padding-top: 16;
     padding-bottom: 16;
 }
+
+.mjk-header {
+    padding: 8;
+    font-size: 16;
+    text-align: center;
+    background-color: limegreen;
+    color: white;
+}

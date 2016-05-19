@@ -818,6 +818,27 @@ seq.each(function(x) {
     
     viewModel.methods = methods;
 
+    var examples = [];
+    
+    examples.push({
+        title: 'Simple example',
+        sourceCode: `        
+var seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279)
+    .where('x => x !== null')
+    .skip(1)
+    .take(3)
+    .distinct()
+    .select('x => "" + x')
+    .orderBy('x => x');
+
+seq.each(function(item) {
+    printLine(item);
+});
+`
+    });
+    
+    viewModel.examples = examples;
+
     return viewModel;
 }
 exports.createViewModel = createViewModel;

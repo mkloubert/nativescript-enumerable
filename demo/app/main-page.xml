@@ -3,12 +3,44 @@
     <ActionBar title="nativescript-enumerable Demo">
     </ActionBar>
   </Page.actionBar>
-
-  <ListView items="{{ methods }}">
-    <ListView.itemTemplate>
-      <Label cssClass="mjk-method" 
-             text="{{ title }}"
-             tap="openScriptEditor" />
-    </ListView.itemTemplate>
-  </ListView>
+  
+  <GridLayout rows="auto,auto,auto,*">
+    <Label row="0"
+           cssClass="mjk-header">
+        <Label.formattedText>
+          <FormattedString>
+            <FormattedString.spans>
+              <Span text="Examples" fontAttributes="Bold" />
+            </FormattedString.spans>
+          </FormattedString>
+        </Label.formattedText>
+    </Label>
+    <ListView row="1"
+              items="{{ examples }}">
+      <ListView.itemTemplate>
+        <Label cssClass="mjk-method" 
+                text="{{ title }}"
+                tap="openScriptEditor" />
+      </ListView.itemTemplate>
+    </ListView>
+  
+    <Label row="2"
+           cssClass="mjk-header">
+        <Label.formattedText>
+          <FormattedString>
+            <FormattedString.spans>
+              <Span text="Methods" fontAttributes="Bold" />
+            </FormattedString.spans>
+          </FormattedString>
+        </Label.formattedText>
+    </Label> 
+    <ListView row="3"
+              items="{{ methods }}">
+      <ListView.itemTemplate>
+        <Label cssClass="mjk-method" 
+                text="{{ title }}"
+                tap="openScriptEditor" />
+      </ListView.itemTemplate>
+    </ListView>
+  </GridLayout>
 </Page>
