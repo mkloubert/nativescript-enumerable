@@ -484,6 +484,10 @@ function asEnumerable(v, throwException) {
         return fromArray(charArray);
     }
     
+    if (typeof v === 'object') {
+        return fromObject(v);
+    }
+    
     // at this point we have no valid value to use as sequence
     
     if (arguments.length < 2) {
