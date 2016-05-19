@@ -508,6 +508,103 @@ printLine('res.1: ' + res1);
 printLine('res.2: ' + res2);
 `
     });
+    
+    // ofType()
+    methods.push({
+        title: 'ofType()',
+        sourceCode: `        
+var seq = Enumerable.create(1, '2', 3)
+    .ofType('number');
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // orderBy()
+    methods.push({
+        title: 'orderBy()',
+        sourceCode: `        
+var seq = Enumerable
+    .create("grape", "passionfruit", "banana", "mango", 
+            "orange", "raspberry", "apple", "blueberry")
+    .orderBy('x => x.length')
+    .thenBy('x => x');
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // reverse()
+    methods.push({
+        title: 'reverse()',
+        sourceCode: `        
+var seq = Enumerable.create(1, 2, 3)
+    .reverse();
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // sum()
+    methods.push({
+        title: 'sum()',
+        sourceCode: `        
+var res1 = Enumerable.create(1, 2, 3)
+    .sum('MK');
+
+var res2 = Enumerable.create()
+    .sum();
+
+printLine("res.1: " + res1);
+printLine("res.2: " + res2);
+`
+    });
+    
+    // take()
+    methods.push({
+        title: 'take()',
+        sourceCode: `        
+var seq = Enumerable.create(0, 1, 2, 3, 4)
+    .take(3);
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // takeWhile()
+    methods.push({
+        title: 'takeWhile()',
+        sourceCode: `        
+var seq = Enumerable.create(22, 33, 44, 55)
+    .takeWhile('x => x < 50');
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // toArray()
+    methods.push({
+        title: 'toArray()',
+        sourceCode: `        
+var arr = Enumerable.create(1, 2, 3)
+    .toArray();
+
+printLine('typeof: ' + (typeof arr));
+for (var i = 0; i < arr.length; i++) {
+    printLine('arr[' + i +'] = ' + arr[i]);
+}
+`
+    });
         
     // union()
     methods.push({
