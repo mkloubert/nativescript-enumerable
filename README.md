@@ -102,7 +102,7 @@ Enumerable.create(44, 26, 92, 30, 71, 38)
 // ofType()
 // '2', 'Tanja'
 Enumerable.create(1, '2', 2, 'Tanja', 3)
-          .ofType('string');
+          .ofType('string');  // typeof x == 'string'
           
 // union()
 // 5, 3, 9, 7, 8, 6, 4, 1, 0
@@ -120,17 +120,55 @@ Enumerable.create(1, 2, 3, 4)
 ```javascript
 // orderBy(), thenBy()
 //
-// apple, grape, mango, banana,
-// orange, blueberry, raspberry, passionfruit
+// "apple", "grape", "mango", "banana",
+// "orange", "blueberry", "raspberry", "passionfruit"
 Enumerable.create("grape", "passionfruit", "banana", "mango", 
                   "orange", "raspberry", "apple", "blueberry")
-          .orderBy('x => x.length')
-          .thenBy('x => x');
+          .orderBy('x => x.length')  // complement: orderByDescending()
+          .thenBy('x => x');  // complement: thenByDescending()
 
 // reverse()
 // 4, 3, 2, 1
 Enumerable.create(1, 2, 3, 4)
           .reverse();
+```
+
+### Take / skip elements
+
+```javascript
+// skip()
+// 3, 4
+Enumerable.create(0, 1, 2, 3, 4)
+          .skip(3);
+
+// skipWhile()
+// 55, 666, 777
+Enumerable.create(22, 33, 44, 55, 666, 77)
+          .skipWhile('x => x < 50');
+          
+// take()
+// 0, 1, 2
+Enumerable.create(0, 1, 2, 3, 4)
+          .take(3);
+
+// takeWhile()
+// 22, 33, 44
+Enumerable.create(22, 33, 44, 55)
+          .takeWhile('x => x < 50');
+```
+
+### Projection
+
+```javascript
+// select()
+// "MARCEL", "KLOUBERT"
+Enumerable.create("Marcel", "Kloubert")
+          .select('x => x.toUpperCase()');
+          
+// selectMany()
+// 1, 10, 100, 2, 20, 200, 3, 30, 300
+Enumerable.create(1, 2, 3)
+          .selectMany('x => [x, x * 10, x * 100]');
 ```
 
 ## Implemented "extension" methods
@@ -178,3 +216,8 @@ Enumerable.create(1, 2, 3, 4)
 
 Take a look at the [plugin/index.js](https://github.com/mkloubert/nativescript-enumerable/blob/master/plugin/index.js) file to get detailed information about all methods (search for `enumerable method templates`).
 
+## Roadmap
+
+* cast()
+* range()
+* toLookup()
