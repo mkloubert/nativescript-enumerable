@@ -40,7 +40,7 @@ var seq1 = Enumerable.create(1, 'MK', true, null, {});
 var seq2 = Enumerable.fromArray([11, 22, 33, 44]);
 
 // from object
-var seq3 = Enumerable.fromArray({
+var seq3 = Enumerable.fromObject({
     MK: 23979,
     TM: 5979
 });
