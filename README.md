@@ -460,7 +460,3 @@ Enumerable.create(0, 1, 2)
 Enumerable.create()
           .defaultIfEmpty('PZ', 'TM', 'MK');
 ```
-
-## Roadmap
-
-* cast()
