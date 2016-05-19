@@ -201,6 +201,17 @@ Enumerable.create([11])
           .singleOrDefault('YS');
 ```
 
+All methods with NO `OrDefault` suffix will throw exceptions if no element was found.
+
+You also can use a function as first argument for all of these methods that works as filter / condition:
+
+```javascript
+// first()
+// 22
+Enumerable.create(11, 22, 33, 44)
+          .first('x => x >= 20');
+```
+
 ### Projection
 
 ```javascript
