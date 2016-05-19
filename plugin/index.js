@@ -1977,10 +1977,10 @@ orderedEnumerableMethods.thenBy = function(selector, comparer) {
 orderedEnumerableMethods.thenByDescending = function(selector, comparer) {
     comparer = toComparerSafe(comparer);
     
-    return this.thenByDescending(selector,
-                                 function(x, y) {
-                                     return comparer(y, x);
-                                 });
+    return this.thenBy(selector,
+                       function(x, y) {
+                           return comparer(y, x);
+                       });
 };
 
 /**
