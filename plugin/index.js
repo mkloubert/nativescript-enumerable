@@ -1449,6 +1449,7 @@ enumerableMethods.zip = function(second, selector) {
         var ctx2 = createEnumerableContext(second, index);
         
         var zipped = selector(ctx1.item, ctx2.item,
+                              index,
                               ctx1, ctx2);
                               
         zippedItems.push(zipped);
