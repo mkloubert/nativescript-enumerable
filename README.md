@@ -157,6 +157,50 @@ Enumerable.create(22, 33, 44, 55)
           .takeWhile('x => x < 50');
 ```
 
+### Get one element
+
+```javascript
+// elementAt()
+// 33
+Enumerable.create(11, 22, 33, 44)
+          .elementAt(2);
+          
+// elementAtOrDefault()
+// 'TM'
+Enumerable.create(11, 22, 33, 44)
+          .elementAtOrDefault(4, 'TM');  // out of range
+          
+// first()
+// 11
+Enumerable.create(11, 22, 33, 44)
+          .first();
+          
+// firstOrDefault()
+// 'MK'
+Enumerable.create()
+          .firstOrDefault('MK');
+          
+// last()
+// 44
+Enumerable.create(11, 22, 33, 44)
+          .last();
+          
+// lastOrDefault()
+// 'PZ'
+Enumerable.create()
+          .lastOrDefault('PZ');
+          
+// single()
+// EXCEPTION, because we have more than one element
+Enumerable.create(11, 22, 33, 44)
+          .single();
+          
+// singleOrDefault()
+// 11
+Enumerable.create([11])
+          .singleOrDefault('YS');
+```
+
 ### Projection
 
 ```javascript
