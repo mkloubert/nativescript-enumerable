@@ -294,6 +294,67 @@ function create() {
 exports.create = create;
 
 /**
+ * Creates a sequence with a range of items.
+ *
+ * @function repeat
+ * 
+ * @param any start The start value.
+ * @param {Number} cnt The number of items to return.
+ * @param any [incrementor] The custom function that increments the current value.
+ * 
+ * @return {Object} The new sequence.
+ */
+function range(start, cnt, incrementor) {
+    incrementor = asFunc(incrementor);
+    if (!incrementor) {
+        incrementor = function(x) {
+            return x + 1;
+        };
+    }
+    
+    var numbers = [];
+    
+    var remainingCnt = cnt;
+    var val = start;
+    while (remainingCnt > 0) {
+        numbers.push(val);
+        
+        val = incrementor(val, {
+            remainingCount: remainingCnt,
+            startValue: start,
+            totalCount: cnt
+        });
+        
+        --remainingCnt;
+    }
+    
+    return fromArray(numbers);
+}
+exports.range = range;
+
+/**
+ * Creates a sequence with a number of specific values.
+ *
+ * @function repeat
+ * 
+ * @param any v The value.
+ * @param {Number} cnt The number of items to return.
+ * 
+ * @return {Object} The new sequence.
+ */
+function repeat(v, cnt) {
+    var items = [];
+
+    while (cnt > 0) {
+        items.push(v);
+        --cnt;
+    }
+    
+    return fromArray(items);
+}
+exports.repeat = repeat;
+
+/**
  * Returns a value as sequence.
  *
  * @function asEnumerable

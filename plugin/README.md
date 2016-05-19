@@ -3,7 +3,7 @@
 
 # NativeScript Enumerable
 
-A [NativeScript](https://nativescript.org/) module providing [https://en.wikipedia.org/wiki/Language_Integrated_Query](LINQ) style extensions for handling arrays and lists.
+A [NativeScript](https://nativescript.org/) module providing [LINQ](https://en.wikipedia.org/wiki/Language_Integrated_Query) style extensions for handling arrays and lists.
 
 ## License
 
@@ -41,7 +41,7 @@ var seq2 = Enumerable.fromArray([11, 22, 33, 44]);
 ### Work with them
 
 ```javascript
-var seq = Enumerable.create(5979, 23979, null, 23979, 1781, 241279);
+var seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279);
 
 var newSeq = seq.where('x => x !== null')  // remove all elements that are (null)
                 .skip(1)  // skip one element (5979)
@@ -78,6 +78,10 @@ where('x => x !== null')
 ```
 
 instead.
+
+## Documentation
+
+Take a look at the [plugin/index.js](https://github.com/mkloubert/nativescript-enumerable/blob/master/plugin/index.js) file to get detailed information about all methods (search for `enumerable method templates`).
 
 ## Examples
 
@@ -247,6 +251,96 @@ Enumerable.create(2, 3, 1, 2)
           .min();
 ```
 
+### Joins
+
+```javascript
+var createPerson = function(name) {
+    return {
+        name: name
+    };
+};
+
+var createPet = function(name, owner) {
+    return {
+        name: name,
+        owner: owner
+    };
+};
+
+var persons = [
+    createPerson("Tanja"),
+    createPerson("Marcel"),
+    createPerson("Yvonne"),
+    createPerson("Josefine")
+];
+
+var pets = [
+    createPet("Gina", persons[1]),
+    createPet("Schnuffi", persons[1]),
+    createPet("Schnuffel", persons[2]),
+    createPet("WauWau", persons[0]),
+    createPet("Lulu", persons[3]),
+    createPet("Asta", persons[1])
+];
+
+// groupJoin()
+// 
+// [0] 'Owner: Tanja; Pets: WauWau, Sparky'
+// [1] 'Owner: Marcel; Pets: Gina, Schnuffi, Asta'
+// [2] 'Owner: Yvonne; Pets: Schnuffel'
+// [3] 'Owner: Josefine; Pets: Lulu'
+Enumerable.create(persons)
+          .groupJoin(pets,
+                     'person => person.name',
+                     'pet => pet.owner.name',
+                     function(person, petsOfPerson) {
+                         var petList = petsOfPerson.aggregate(function(result, pet) {
+                             return result += ", " + pet.name;
+                         });
+                     
+                         return 'Owner: ' + person.name + '; Pets: ' + petList;
+                     });
+
+// join()
+// 
+// [0] 'Owner: Tanja; Pet: WauWau'
+// [1] 'Owner: Marcel; Pet: Gina'
+// [2] 'Owner: Marcel; Pet: Schnuffi'
+// [3] 'Owner: Marcel; Pet: Asta'
+// [4] 'Owner: Yvonne; Pet: Schnuffel'
+// [5] 'Owner: Josefine; Pet: Lulu'
+Enumerable.create(persons)
+          .join(pets,
+                'person => person.name',
+                'pet => pet.owner.name',
+                function(person, pet) {
+                    return 'Owner: ' + person.name + '; Pet: ' + pet.name;
+                });
+```
+
+### Groupings
+
+```javascript
+// groupBy()
+Enumerable.create("grape", "passionfruit", "banana",
+                  "apple", "blueberry")
+          .groupBy('x => x[0]')
+          .each(function(grouping) {
+                    // grouping[0].key = 'g'
+                    // grouping[0][0] = 'grape'
+                    
+                    // grouping[1].key = 'p'
+                    // grouping[1][0] = 'passionfruit'
+                    
+                    // grouping[2].key = 'b'
+                    // grouping[2][0] = 'banana'
+                    // grouping[2][1] = 'blueberry'
+                    
+                    // grouping[3].key = 'a'
+                    // grouping[3][0] = 'apple'
+                });
+```
+
 ### Projection
 
 ```javascript
@@ -269,50 +363,71 @@ Enumerable.create('Marcel', 'Bill', 'Albert')
                });
 ```
 
-## Implemented "extension" methods
+### Checks / conditions
 
-* aggregate()
-* all()
-* any()
-* average()
-* concat()
-* contains()
-* count()
-* defaultIfEmpty()
-* distinct()
-* elementAt()
-* elementAtOrDefault()
-* except()
-* first()
-* firstOrDefault()
-* groupBy()
-* groupJoin()
-* intersect()
-* join()
-* last()
-* lastOrDefault()
-* max()
-* min()
-* ofType()
-* orderBy()
-* orderByDescending()
-* reverse()
-* select()
-* selectMany()
-* sequenceEqual()
-* single()
-* singleOrDefault()
-* skip()
-* skipWhile()
-* sum()
-* take()
-* takeWhile()
-* toArray()
-* union()
-* where()
-* zip()
+```javascript
+// all()
+// (false)
+Enumerable.create(1, 2, '3', 4)
+          .all('x => typeof x !== "string"');
+          
+// contains()
+// (true)
+Enumerable.create(1, 2, '3')
+          .contains(3);
 
-Take a look at the [plugin/index.js](https://github.com/mkloubert/nativescript-enumerable/blob/master/plugin/index.js) file to get detailed information about all methods (search for `enumerable method templates`).
+// any()
+// (true)
+Enumerable.create(1, 2, '3', 4)
+          .any('x => typeof x === "string"');
+ 
+// sequenceEqual()
+// (false)         
+Enumerable.create([1, 2, 3])
+          .sequenceEqual([1, 3, 2]);
+```
+
+### Conversions
+
+```javascript
+// toArray()
+var jsArray = Enumerable.create(1, 2, 3, 4)
+                        .toArray();
+```
+
+### Count
+
+```javascript
+// 3
+Enumerable.create(0, 1, 2)
+          .count();
+          
+// 2
+Enumerable.create(0, 1, 2)
+          .count('x => x > 0');
+```
+
+### More
+
+#### concat
+
+```javascript
+// 0, 1, 2, 'PZ', 'TM', 'MK'
+Enumerable.create(0, 1, 2)
+          .concat(['PZ', 'TM', 'MK']);
+```
+
+#### defaultIfEmpty
+
+```javascript
+// 0, 1, 2
+Enumerable.create(0, 1, 2)
+          .defaultIfEmpty('PZ', 'TM', 'MK');
+          
+// 'PZ', 'TM', 'MK'
+Enumerable.create()
+          .defaultIfEmpty('PZ', 'TM', 'MK');
+```
 
 ## Roadmap
 
