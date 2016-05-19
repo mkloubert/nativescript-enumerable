@@ -199,7 +199,7 @@ function createEnumerableContext(enumerable, index) {
     });
     
     Object.defineProperty(eCtx, 'key', {
-        get: function() { return enumerable.key; }
+        get: function() { return enumerable.itemKey; }
     });
     
     Object.defineProperty(eCtx, 'sequence', {
@@ -227,7 +227,7 @@ function setupEnumerable(enumerable, opts) {
         get: opts.isValid
     });
     
-    Object.defineProperty(enumerable, 'key', {
+    Object.defineProperty(enumerable, 'itemKey', {
         get: opts.key
     });
     
