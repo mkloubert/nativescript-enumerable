@@ -415,7 +415,15 @@ Enumerable.create([1, 2, 3])
 // toArray()
 var jsArray = Enumerable.create(1, 2, 3, 4)
                         .toArray();
-                        
+  
+// toObservable()
+var o = Enumerable.create(1, 2, 3, 4)
+                  .toObservable('(item, index) => "item" + index');
+  
+// toObservableArray()
+var oa = Enumerable.create(1, 2, 3, 4)
+                   .toObservableArray();  
+  
 // toLookup()
 // 
 // lookup['A'][0] = 'Albert'
