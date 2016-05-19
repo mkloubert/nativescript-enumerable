@@ -1289,7 +1289,7 @@ enumerableMethods.ofType = function(type) {
     type = ("" + type).replace(/^\s+|\s+$/gm, '');
     
     var checkType = function(x) {
-        return typeof x == type;    
+        return typeof x === type;    
     };
     
     switch (type) {
