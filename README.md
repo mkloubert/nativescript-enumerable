@@ -399,6 +399,16 @@ Enumerable.create([1, 2, 3])
 // toArray()
 var jsArray = Enumerable.create(1, 2, 3, 4)
                         .toArray();
+                        
+// toLookup()
+// 
+// lookup['A'][0] = 'Albert'
+// lookup['B'][0] = 'Bill'
+// lookup['B'][1] = 'Barney'
+// lookup['K'][0] = 'Konrad'
+// lookup['M'][0] = 'Marcel'
+var lookup = Enumerable.create(['Bill', 'Marcel', 'Barney', 'Albert', 'Konrad'])
+                       .toLookup('x => x[0]');
 ```
 
 ### Count
@@ -438,4 +448,3 @@ Enumerable.create()
 ## Roadmap
 
 * cast()
-* toLookup()

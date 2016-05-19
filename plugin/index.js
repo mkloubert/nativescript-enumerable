@@ -300,13 +300,20 @@ exports.create = create;
  * 
  * @param any start The start value.
  * @param {Number} cnt The number of items to return.
- * @param any [incrementor] The custom function that increments the current value.
+ * @param any [incrementor] The custom function (or value) that increments the current value.
  * 
  * @return {Object} The new sequence.
  */
 function range(start, cnt, incrementor) {
-    incrementor = asFunc(incrementor);
-    if (!incrementor) {
+    incrementor = asFunc(incrementor, false);
+    if (false === incrementor) {
+        var incrementBy = incrementor;
+        
+        incrementor = function(x) {
+            return x + incrementBy;
+        };
+    }
+    else if (!incrementor) {
         incrementor = function(x) {
             return x + 1;
         };
@@ -1443,6 +1450,29 @@ enumerableMethods.toArray = function() {
     
     return arr;
 };
+
+/**
+ * Creates a lookup object from the sequence.
+ *
+ * @method groupBy
+ * 
+ * @param any keySelector The group key selector.
+ * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
+ * 
+ * @throw At least one argument is invalid.
+ * 
+ * @return {Object} The lookup array.
+ */
+enumerableMethods.toLookup = function(keySelector, keyEqualityComparer) {
+    var lu = {};
+    this.groupBy(keySelector, keyEqualityComparer)
+        .each(function(grouping) {
+                  lu[grouping.key] = grouping;
+              });
+    
+    return lu;
+};
+
 
 /**
  * Produces the set union of that sequence and another.
