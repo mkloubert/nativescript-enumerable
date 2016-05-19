@@ -130,6 +130,21 @@ printLine("res.3: " + res3);
 `
     });
     
+    // defaultIfEmpty()
+    methods.push({
+        title: 'defaultIfEmpty()',
+        sourceCode: `        
+var res1 = Enumerable.create(5979, 23979)
+    .defaultIfEmpty('TM', 'MK');
+
+var res2 = Enumerable.create()
+    .defaultIfEmpty('TM', 'MK');
+
+printLine("res.1: " + toStringList(res1));
+printLine("res.2: " + toStringList(res2));
+`
+    });
+    
     // distinct()
     methods.push({
         title: 'distinct()',
@@ -146,6 +161,176 @@ var res3 = Enumerable.create(111, 222, 333, '222', 444, 333)
 printLine("res.1: " + toStringList(res1));
 printLine("res.2: " + toStringList(res2));
 printLine("res.3: " + toStringList(res3));
+`
+    });
+    
+    // elementAt()
+    methods.push({
+        title: 'elementAt()',
+        sourceCode: `        
+var res1 = Enumerable.create(5979, 23979)
+    .elementAt(1);
+
+var res2;
+try {
+    res2 = Enumerable.create(1, 2)
+        .elementAt(2);    
+}
+catch (e) {
+    res2 = e;
+}
+
+var res3;
+try {
+    res3 = Enumerable.create()
+        .elementAt(0);
+}
+catch (e) {
+    res3 = e;
+}
+
+printLine("res.1: " + res1);
+printLine("res.2: " + res2);
+printLine("res.3: " + res3);
+`
+    });
+    
+    // elementAtOrDefault()
+    methods.push({
+        title: 'elementAtOrDefault()',
+        sourceCode: `        
+var res1 = Enumerable.create(5979, 23979)
+    .elementAtOrDefault(1, 'PZ');
+
+var res2 = Enumerable.create(1, 2)
+    .elementAtOrDefault(2, 'PZ');
+
+var res3 = Enumerable.create()
+    .elementAtOrDefault(0, 'YS');
+
+printLine("res.1: " + res1);
+printLine("res.2: " + res2);
+printLine("res.3: " + res3);
+`
+    });
+    
+    // first()
+    methods.push({
+        title: 'first()',
+        sourceCode: `        
+var res1 = Enumerable.create(5979, 23979)
+    .first();
+
+var res2 = Enumerable.create(5979, 23979)
+    .first('x => x >= 6000');
+    
+var res3;
+try {
+    res3 = Enumerable.create()
+        .first();    
+}
+catch (e) {
+    res3 = e;
+}
+
+var res4;
+try {
+    res4 = Enumerable.create(1, 2, 3)
+        .first('x => x > 3');
+}
+catch (e) {
+    res4 = e;
+}
+
+printLine("res.1: " + res1);
+printLine("res.2: " + res2);
+printLine("res.3: " + res3);
+printLine("res.4: " + res4);
+`
+    });
+    
+    // firstOrDefault()
+    methods.push({
+        title: 'firstOrDefault()',
+        sourceCode: `        
+var res1 = Enumerable.create(5979, 23979)
+    .firstOrDefault('TM');
+
+var res2 = Enumerable.create(5979, 23979)
+    .firstOrDefault('x => x >= 6000',
+                    'MK');
+
+var res3 = Enumerable.create()
+    .firstOrDefault('JS');
+
+var res4 = Enumerable.create(1, 2, 3)
+    .firstOrDefault('x => x > 3',
+                    'YS');
+
+printLine("res.1: " + res1);
+printLine("res.2: " + res2);
+printLine("res.3: " + res3);
+printLine("res.4: " + res4);
+`
+    });
+    
+    // last()
+    methods.push({
+        title: 'last()',
+        sourceCode: `        
+var res1 = Enumerable.create(5979, 23979)
+    .last();
+
+var res2 = Enumerable.create(5979, 23979)
+    .last('x => x < 23000');
+    
+var res3;
+try {
+    res3 = Enumerable.create()
+        .last();    
+}
+catch (e) {
+    res3 = e;
+}
+
+var res4;
+try {
+    res4 = Enumerable.create(1, 2, 3)
+        .last('x => x > 3');
+}
+catch (e) {
+    res4 = e;
+}
+
+printLine("res.1: " + res1);
+printLine("res.2: " + res2);
+printLine("res.3: " + res3);
+printLine("res.4: " + res4);
+`
+    });
+    
+    // lastOrDefault()
+    methods.push({
+        title: 'lastOrDefault()',
+        sourceCode: `        
+var res1 = Enumerable.create(5979, 23979)
+    .lastOrDefault('TM');
+
+var res2 = Enumerable.create(5979, 23979)
+    .lastOrDefault('x => x < 23000',
+                   'MK');
+
+var res3 = Enumerable.create()
+    .lastOrDefault('JS');
+
+var res4 = Enumerable.create(1, 2, 3)
+    .lastOrDefault('x => x > 3',
+                   'YS');
+
+printLine("res.1: " + res1);
+printLine("res.2: " + res2);
+printLine("res.3: " + res3);
+printLine("res.4: " + res4);
 `
     });
     
