@@ -422,6 +422,10 @@ Enumerable.create([1, 2, 3])
 var jsArray = Enumerable.create(1, 2, 3, 4)
                         .toArray();
   
+// toObject()
+var obj = Enumerable.create(1, 2, 3, 4)
+                    .toObject('(item, index) => "item" + index');  
+  
 // toObservable()
 var o = Enumerable.create(1, 2, 3, 4)
                   .toObservable('(item, index) => "item" + index');

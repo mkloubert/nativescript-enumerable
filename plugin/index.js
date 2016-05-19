@@ -1718,6 +1718,37 @@ enumerableMethods.toArray = function() {
 };
 
 /**
+ * Creates a new object from the items of that sequence.
+ *
+ * @method toObject
+ * 
+ * @param any [keySelector] The custom key selector to use.
+ * 
+ * @throws Key selector is invalid.
+ * 
+ * @return {Object} The new object.
+ */
+enumerableMethods.toObject = function(keySelector) {
+    if (arguments.length < 1) {
+        keySelector = function(item, index, key) {
+            return key;
+        };
+    }
+    
+    keySelector = asFunc(keySelector);
+
+    var obj = {};
+    
+    this.each(function(x, index, ctx) {
+        var key = keySelector(x, index, ctx.key);
+        
+        obj[key] = x;
+    });
+    
+    return obj;
+};
+
+/**
  * Creates a new observable object from the items of that sequence.
  *
  * @method toObservable
