@@ -5,6 +5,8 @@
 
 A [NativeScript](https://nativescript.org/) module providing [LINQ](https://en.wikipedia.org/wiki/Language_Integrated_Query) style extensions for handling arrays and lists.
 
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=YA4RCT6FQX28J)
+
 ## License
 
 [MIT license](https://raw.githubusercontent.com/mkloubert/nativescript-enumerable/master/LICENSE)
