@@ -1121,6 +1121,21 @@ enumerableMethods.ofType = function(type) {
 };
 
 /**
+ * Sorts the elements of that sequence in ascending order by using the values itself as keys.
+ * 
+ * @method order
+ * 
+ * @param any [comparer] The custom key comparer to use.
+ * 
+ * @throws The comparer is invalid.
+ * 
+ * @return {Object} The new sequence.
+ */
+enumerableMethods.order = function(comparer) {
+    return this.orderBy('x => x', comparer);
+};
+
+/**
  * Sorts the elements of that sequence in ascending order.
  *
  * @method orderBy
@@ -1164,6 +1179,21 @@ enumerableMethods.orderBy = function(selector, comparer) {
     });                                       
     
     return orderedEnumerable;
+};
+
+/**
+ * Sorts the elements of that sequence in descending order by using the values as keys.
+ *
+ * @method orderDescending
+ * 
+ * @param any [comparer] The custom key comparer to use.
+ * 
+ * @throws The comparer is invalid.
+ * 
+ * @return {Object} The new sequence.
+ */
+enumerableMethods.orderDescending = function(comparer) {
+    return this.orderByDescending('x => x', comparer);
 };
 
 /**
@@ -1634,6 +1664,22 @@ enumerableMethods.zip = function(second, selector) {
 // ---------- ordered enumerable method templates ----------
 
 /**
+ * Performs a subsequent ordering of the elements in that sequence in ascending order,
+ * using the values itself as keys.
+ * 
+ * @method then
+ * 
+ * @param any [comparer] The custom key comparer to use.
+ * 
+ * @throws The comparer is invalid.
+ * 
+ * @return {Object} The new sequence.
+ */
+orderedEnumerableMethods.then = function(comparer) {
+    return this.thenBy('x => x', comparer);
+};
+
+/**
  * Performs a subsequent ordering of the elements in that sequence in ascending order, according to a key.
  * 
  * @method thenBy
@@ -1703,10 +1749,18 @@ orderedEnumerableMethods.thenByDescending = function(selector, comparer) {
                                  });
 };
 
-/*
-
-TODOs:
-
-cast()
-
-*/
+/**
+ * Performs a subsequent ordering of the elements in that sequence in descending order,
+ * using the values as keys.
+ * 
+ * @method thenDescending
+ * 
+ * @param any [comparer] The custom key comparer to use.
+ * 
+ * @throws The comparer is invalid.
+ * 
+ * @return {Object} The new sequence.
+ */
+orderedEnumerableMethods.thenDescending = function(selector, comparer) {
+    return this.thenByDescending('x => x', comparer);
+};
