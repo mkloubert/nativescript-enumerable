@@ -469,6 +469,15 @@ Enumerable.create()
           .defaultIfEmpty('PZ', 'TM', 'MK');
 ```
 
+#### moveNext / current
+
+```javascript
+var seq = Enumerable.create(0, 1, 2);
+while (seq.moveNext()) {
+    console.log(seq.current);
+}
+```
+
 #### reset
 
 ```javascript
