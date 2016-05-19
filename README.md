@@ -3,7 +3,7 @@
 
 # NativeScript Enumerable
 
-A [NativeScript](https://nativescript.org/) module providing [https://en.wikipedia.org/wiki/Language_Integrated_Query](LINQ) style extensions for handling arrays and lists.
+A [NativeScript](https://nativescript.org/) module providing [LINQ](https://en.wikipedia.org/wiki/Language_Integrated_Query) style extensions for handling arrays and lists.
 
 ## License
 
@@ -252,7 +252,6 @@ Enumerable.create(2, 3, 1, 2)
 #### join()
 
 ```javascript
-
 var createPerson = function(name) {
     return {
         name: name
@@ -293,8 +292,57 @@ Enumerable.create(persons)
                 'person => person.name',
                 'pet => pet.owner.name',
                 function(person, pet) {
-                    return 'Owner: "' + person.name + '"; Pet: "' + pet.name + '"';
+                    return 'Owner: ' + person.name + '; Pet: ' + pet.name;
                 });
+```
+
+#### groupJoin()
+
+```javascript
+var createPerson = function(name) {
+    return {
+        name: name
+    };
+};
+
+var createPet = function(name, owner) {
+    return {
+        name: name,
+        owner: owner
+    };
+};
+
+var persons = [
+    createPerson("Tanja"),
+    createPerson("Marcel"),
+    createPerson("Yvonne"),
+    createPerson("Josefine")
+];
+
+var pets = [
+    createPet("Gina", persons[1]),
+    createPet("Schnuffi", persons[1]),
+    createPet("Schnuffel", persons[2]),
+    createPet("WauWau", persons[0]),
+    createPet("Lulu", persons[3]),
+    createPet("Asta", persons[1])
+];
+
+// [0] 'Owner: Tanja; Pets: WauWau, Sparky'
+// [1] 'Owner: Marcel; Pets: Gina, Schnuffi, Asta'
+// [2] 'Owner: Yvonne; Pets: Schnuffel'
+// [3] 'Owner: Josefine; Pets: Lulu'
+Enumerable.create(persons)
+          .groupJoin(pets,
+                     'person => person.name',
+                     'pet => pet.owner.name',
+                     function(person, pets) {
+                         var petList = pets.aggregate(function(result, pet) {
+                             return result += ", " + pet.name;
+                         });
+                     
+                         return 'Owner: ' + person.name + '; Pets: ' + petList;
+                     });
 ```
 
 ### Projection
