@@ -93,7 +93,7 @@ Take a look at the [plugin/index.js](https://github.com/mkloubert/nativescript-e
 
 ## Demo app
 
-The [demo app](https://github.com/mkloubert/nativescript-enumerable/tree/master/demo) contains example to all functions and methods.
+The [demo app](https://github.com/mkloubert/nativescript-enumerable/tree/master/demo) contains examples to all functions and methods.
 
 It also contains a code editor where **you can enter own code and run it!**
 
