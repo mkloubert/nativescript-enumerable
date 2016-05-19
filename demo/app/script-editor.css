@@ -37,3 +37,11 @@ TextView {
     margin-top: 16;
     width: 100%;
 }
+
+.mjk-editor-title {
+    font-size: 20;
+    text-align: center;
+    padding: 8;
+    color: black;
+    margin-bottom: 16;
+}

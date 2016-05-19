@@ -7,7 +7,7 @@
   <ListView items="{{ methods }}">
     <ListView.itemTemplate>
       <Label cssClass="mjk-method" 
-             text="{{ name + '()' }}"
+             text="{{ title }}"
              tap="openScriptEditor" />
     </ListView.itemTemplate>
   </ListView>

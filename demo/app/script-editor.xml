@@ -8,12 +8,23 @@
   </Page.actionBar>
 
   <ScrollView>
-    <GridLayout rows="auto,auto,auto">
-      <TextView row="0" cssClass="mjk-method-sourceCode"
+    <GridLayout rows="auto,auto,auto,auto">
+      <Label row="0"
+             cssClass="mjk-editor-title">
+        <Label.formattedText>
+          <FormattedString>
+            <FormattedString.spans>
+              <Span text="{{ method.title }}" fontAttributes="Bold" />
+            </FormattedString.spans>
+          </FormattedString>
+        </Label.formattedText>
+      </Label>
+    
+      <TextView row="1" cssClass="mjk-method-sourceCode"
                 id="mjk-script-textEditor"
                 text="{{ method.sourceCode }}" />
                 
-      <StackLayout row="1"
+      <StackLayout row="2"
                    visibility="{{ isExecuting ? 'collapsed' : 'visible' }}">
                   
           <Button cssClass="mjk-exec-button"
@@ -68,7 +79,7 @@
           </ListView>
       </StackLayout>          
                 
-      <ActivityIndicator row="1"
+      <ActivityIndicator row="2"
                         width="64" height="64"
                         visibility="{{ !isExecuting ? 'collapsed' : 'visible' }}"
                         busy="true" />
