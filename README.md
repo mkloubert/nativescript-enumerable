@@ -227,7 +227,7 @@ Enumerable.create(11, 22, 33, 44)
           
 // singleOrDefault()
 // 11
-Enumerable.create([11])
+Enumerable.create(11)
           .singleOrDefault('YS');
 ```
 
