@@ -409,7 +409,7 @@ var jsArray = Enumerable.create(1, 2, 3, 4)
 // lookup['B'][1] = 'Barney'
 // lookup['K'][0] = 'Konrad'
 // lookup['M'][0] = 'Marcel'
-var lookup = Enumerable.create(['Bill', 'Marcel', 'Barney', 'Albert', 'Konrad'])
+var lookup = Enumerable.create('Bill', 'Marcel', 'Barney', 'Albert', 'Konrad')
                        .toLookup('x => x[0]');
 ```
 

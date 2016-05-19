@@ -550,6 +550,132 @@ seq.each(function(x) {
 });
 `
     });
+
+    // select()
+    methods.push({
+        title: 'select()',
+        sourceCode: `        
+var seq = Enumerable.create("Marcel", "Kloubert")
+    .select('x => x.toUpperCase()');
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // selectMany()
+    methods.push({
+        title: 'selectMany()',
+        sourceCode: `        
+var seq = Enumerable.create(1, 2, 3)
+    .selectMany('x => [x, x * 10, x * 100]');
+
+seq.each(function(x) {
+    printLine(x);    
+});
+`
+    });
+    
+    // sequenceEqual()
+    methods.push({
+        title: 'sequenceEqual()',
+        sourceCode: `        
+var res1 = Enumerable.create(1, 2, 3)
+    .sequenceEqual([1, 2, 3]);
+
+var res2 = Enumerable.create(1, 3, 2)
+    .sequenceEqual([1, 2, 3]);
+
+var res3 = Enumerable.create(1, 2)
+    .sequenceEqual([1, 2, 3]);
+
+var res4 = Enumerable.create(1, 2, 3)
+    .sequenceEqual([1, '2', 3]);
+  
+var res5 = Enumerable.create(1, 2, 3)
+    .sequenceEqual([1, '2', 3],
+                   '(x, y) => x === y');  
+    
+printLine('res.1: ' + res1);
+printLine('res.2: ' + res2);
+printLine('res.3: ' + res3);
+printLine('res.4: ' + res4);
+printLine('res.5: ' + res5);
+`
+    });
+    
+    // single()
+    methods.push({
+        title: 'single()',
+        sourceCode: `
+var res1 = Enumerable.create(1)
+    .single();
+    
+var res2;
+try {
+    res2 = Enumerable.create()
+    .single();
+}
+catch (e) {
+    res2 = e;
+}
+
+var res3 = Enumerable.create(11, 22)
+    .single('x => x > 11');
+    
+var res4;
+try {
+    res4 = Enumerable.create(111, 222, 333)
+    .single('x => x > 333');
+}
+catch (e) {
+    res4 = e;
+}
+
+var res5;
+try {
+    res5 = Enumerable.create()
+    .single('x => x > 333');
+}
+catch (e) {
+    res5 = e;
+}
+
+printLine('res.1 => ' + res1);
+printLine('res.2 => ' + res2);
+printLine('res.3 => ' + res3);
+printLine('res.4 => ' + res4);
+printLine('res.5 => ' + res5);
+`
+    });
+    
+    // singleOrDefault()
+    methods.push({
+        title: 'singleOrDefault()',
+        sourceCode: `
+var res1 = Enumerable.create(1)
+    .singleOrDefault();
+    
+var res2 = Enumerable.create()
+    .singleOrDefault();
+
+var res3 = Enumerable.create(11, 22)
+    .single('x => x > 11');
+    
+var res4 = Enumerable.create(111, 222, 333)
+    .singleOrDefault('x => x > 333');
+
+var res5 = Enumerable.create()
+    .singleOrDefault('x => x > 333');
+
+printLine('res.1 => ' + res1);
+printLine('res.2 => ' + res2);
+printLine('res.3 => ' + res3);
+printLine('res.4 => ' + res4);
+printLine('res.5 => ' + res5);
+`
+    });
     
     // skip()
     methods.push({
@@ -628,6 +754,24 @@ var arr = Enumerable.create(1, 2, 3)
 printLine('typeof: ' + (typeof arr));
 for (var i = 0; i < arr.length; i++) {
     printLine('arr[' + i +'] = ' + arr[i]);
+}
+`
+    });
+    
+    // toLookup()
+    methods.push({
+        title: 'toLookup()',
+        sourceCode: `
+var lookup = Enumerable.create('Bill', 'Marcel', 'Barney', 'Albert', 'Konrad')
+    .toLookup('x => x[0]');
+    
+for (var k in lookup) {
+    printLine('key: ' + k);
+    
+    var items = lookup[k];
+    items.each(function(x) {
+        printLine("\t" + x);    
+    });
 }
 `
     });
