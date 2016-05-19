@@ -249,8 +249,6 @@ Enumerable.create(2, 3, 1, 2)
 
 ### Joins
 
-#### join()
-
 ```javascript
 var createPerson = function(name) {
     return {
@@ -281,53 +279,8 @@ var pets = [
     createPet("Asta", persons[1])
 ];
 
-// [0] 'Owner: Tanja; Pet: WauWau'
-// [1] 'Owner: Marcel; Pet: Gina'
-// [2] 'Owner: Marcel; Pet: Schnuffi'
-// [3] 'Owner: Marcel; Pet: Asta'
-// [4] 'Owner: Yvonne; Pet: Schnuffel'
-// [5] 'Owner: Josefine; Pet: Lulu'
-Enumerable.create(persons)
-          .join(pets,
-                'person => person.name',
-                'pet => pet.owner.name',
-                function(person, pet) {
-                    return 'Owner: ' + person.name + '; Pet: ' + pet.name;
-                });
-```
-
-#### groupJoin()
-
-```javascript
-var createPerson = function(name) {
-    return {
-        name: name
-    };
-};
-
-var createPet = function(name, owner) {
-    return {
-        name: name,
-        owner: owner
-    };
-};
-
-var persons = [
-    createPerson("Tanja"),
-    createPerson("Marcel"),
-    createPerson("Yvonne"),
-    createPerson("Josefine")
-];
-
-var pets = [
-    createPet("Gina", persons[1]),
-    createPet("Schnuffi", persons[1]),
-    createPet("Schnuffel", persons[2]),
-    createPet("WauWau", persons[0]),
-    createPet("Lulu", persons[3]),
-    createPet("Asta", persons[1])
-];
-
+// groupJoin()
+// 
 // [0] 'Owner: Tanja; Pets: WauWau, Sparky'
 // [1] 'Owner: Marcel; Pets: Gina, Schnuffi, Asta'
 // [2] 'Owner: Yvonne; Pets: Schnuffel'
@@ -343,6 +296,22 @@ Enumerable.create(persons)
                      
                          return 'Owner: ' + person.name + '; Pets: ' + petList;
                      });
+
+// join()
+// 
+// [0] 'Owner: Tanja; Pet: WauWau'
+// [1] 'Owner: Marcel; Pet: Gina'
+// [2] 'Owner: Marcel; Pet: Schnuffi'
+// [3] 'Owner: Marcel; Pet: Asta'
+// [4] 'Owner: Yvonne; Pet: Schnuffel'
+// [5] 'Owner: Josefine; Pet: Lulu'
+Enumerable.create(persons)
+          .join(pets,
+                'person => person.name',
+                'pet => pet.owner.name',
+                function(person, pet) {
+                    return 'Owner: ' + person.name + '; Pet: ' + pet.name;
+                });
 ```
 
 ### Projection
