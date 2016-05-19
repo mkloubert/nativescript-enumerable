@@ -383,6 +383,49 @@ Enumerable.create([1, 2, 3])
           .sequenceEqual([1, 3, 2]);
 ```
 
+### Conversions
+
+```javascript
+// toArray()
+var jsArray = Enumerable.create(1, 2, 3, 4)
+                        .toArray();
+```
+
+### Count
+
+```javascript
+// 3
+Enumerable.create(0, 1, 2)
+          .count();
+          
+// 2
+Enumerable.create(0, 1, 2)
+          .count('x => x > 0');
+```
+
+### More
+
+#### concat
+
+```javascript
+// 0, 1, 2, 'PZ', 'TM', 'MK'
+Enumerable.create(0, 1, 2)
+          .concat(['PZ', 'TM', 'MK']);
+```
+
+#### defaultIfEmpty
+
+```javascript
+// 0, 1, 2
+Enumerable.create(0, 1, 2)
+          .defaultIfEmpty('PZ', 'TM', 'MK');
+          
+// 'PZ', 'TM', 'MK'
+Enumerable.create()
+          .defaultIfEmpty('PZ', 'TM', 'MK');
+```
+
+
 ## Implemented "extension" methods
 
 * aggregate()
