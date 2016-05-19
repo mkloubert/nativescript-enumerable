@@ -24,6 +24,10 @@ function executeScript(__36D7F6225B5F4B40879B87355C0AB2F0,
     var PRINT = print;
     
     var printLine = function(msg) {
+        if (arguments.length < 1) {
+            msg = "";
+        }
+        
         print(msg + "\r\n");
     };
     

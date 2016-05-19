@@ -385,6 +385,21 @@ function repeat(v, cnt) {
 exports.repeat = repeat;
 
 /**
+ * Checks if a value is a sequence.
+ *
+ * @function isEnumerable
+ * 
+ * @param any v The value to check.
+ * 
+ * @return {Boolean} Is sequence or not.
+ */
+function isEnumerable(v) {
+    return v &&
+           v.__AE81792B3F554A3DA7BCEE8D695EB429 === 'UvIQTaBP';
+};
+exports.isEnumerable = isEnumerable;
+
+/**
  * Returns a value as sequence.
  *
  * @function asEnumerable
@@ -399,7 +414,7 @@ function asEnumerable(v, throwException) {
         return fromArray(v);
     }
     
-    if (v.__AE81792B3F554A3DA7BCEE8D695EB429 === 'UvIQTaBP') {
+    if (isEnumerable(v)) {
         return v;
     }
     
@@ -523,6 +538,97 @@ enumerableMethods.average = function(defaultValue) {
     
     return cnt > 0 ? (parseFloat(sum) / parseFloat(cnt))
                    : defaultValue;
+};
+
+/**
+ * Casts all items to a specific type.
+ *
+ * @method cast
+ * 
+ * @param {String} type The target type.
+ * 
+ * @return any The new sequence with the casted items.
+ */
+enumerableMethods.cast = function(type) {
+    if (type !== null) {
+        if (type === undefined) {
+            type = "";
+        }
+        else {
+            type = ("" + type).replace(/^\s+|\s+$/gm, '');
+        }
+    }
+    
+    return this.select(function(x) {        
+        if (type === null) {
+            return null;
+        }       
+
+        switch (type) {
+            case '':
+                return x;
+                
+            case 'null':
+                return null;
+            
+            case 'undefined':
+                return undefined;
+            
+            case 'number':
+                if (!x) {
+                    return 0.0;    
+                }
+                if (!isNaN(x)) {
+                    return x;
+                }
+                return parseFloat(x);
+                
+            case 'float':
+                if (!x) {
+                    return 0.0;    
+                }
+                return parseFloat(x);
+            
+            case 'int':
+            case 'integer':
+                if (!x) {
+                    return 0;    
+                }
+                return parseInt(x);
+                
+            case 'str':
+            case 'string':
+                if (!x) {
+                    return "";
+                }
+                return "" + x;
+                
+            case 'enumerable':
+            case 'seq':
+            case 'sequence':
+                return asEnumerable(x);
+                
+            case 'array':
+            case 'Array':
+                return asEnumerable(x).toArray();
+            
+            case 'Observable':
+            case 'observable':
+                return asEnumerable(x).toObservable();
+                
+            case 'observablearray':
+            case 'observableArray':
+            case 'ObservableArray':
+                return asEnumerable(x).toObservableArray();
+                
+            case 'bool':
+            case 'boolean':
+                return x ? true : false;
+            
+            default:
+                throw "Cannot not cast '" + x + "' to '" + type + "'!";
+        }
+    });
 };
 
 /**
@@ -1115,9 +1221,37 @@ enumerableMethods.min = function(defaultValue) {
  * @return {Object} The new sequence.
  */
 enumerableMethods.ofType = function(type) {
-    return this.where(function(x) {
-        return typeof x == type;
-    });
+    type = ("" + type).replace(/^\s+|\s+$/gm, '');
+    
+    var checkType = function(x) {
+        return typeof x == type;    
+    };
+    
+    switch (type) {
+        case 'bool':
+            type = 'boolean';
+            break;
+            
+        case 'float':
+        case 'int':
+        case 'integer':
+            type = 'number';
+            break;
+            
+        case 'str':
+            type = 'string';
+            break;
+            
+        case 'enumerable':
+        case 'seq':
+        case 'sequence':
+            checkType = function(x) {
+                return isEnumerable(x);
+            };
+            break;
+    }
+    
+    return this.where(checkType);
 };
 
 /**

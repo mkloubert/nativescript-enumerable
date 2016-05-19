@@ -80,6 +80,34 @@ printLine("res.2: " + res2);
 `
     });
     
+    // cast()
+    methods.push({
+        title: 'cast()',
+        sourceCode: `
+var castTo = function(items, type) {
+    var seq = Enumerable.fromArray(items)
+        .cast(type);
+    
+    printLine("type: " + type);
+    seq.each(function(x) {
+        printLine('\t[' + (typeof x) + ']: ' + x);
+    });
+    printLine();
+};
+
+castTo([1, undefined, 2, null, 3], 'string');
+castTo(['11.1', undefined, '22.3', null, 666], 'number');
+castTo(['11.1', undefined, '22.3', null, 666], 'float');
+castTo(['11.1', undefined, '22.3', null, 666], 'int')
+castTo(['Marcel'], 'array');
+castTo(['Kloubert'], 'ObservableArray');
+castTo([0, 1, undefined, "", 2, null, 3], 'bool');
+castTo([0, 1, undefined, "", 2, null, 3], 'undefined');
+castTo([0, 1, undefined, "", 2, null, 3], 'null');
+castTo([0, 1, undefined, "", 2.0, null, true, 3, false, {}], '');
+`
+    });
+    
     // concat()
     methods.push({
         title: 'concat()',
@@ -91,9 +119,9 @@ items(seq);
 `
     });
     
-    // concat()
+    // contains()
     methods.push({
-        title: 'concat()',
+        title: 'contains()',
         sourceCode: `
 var res1 = Enumerable.create(1, 2, 3)
     .contains(1);
