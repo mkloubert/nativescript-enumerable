@@ -336,6 +336,30 @@ Enumerable.create('Marcel', 'Bill', 'Albert')
                });
 ```
 
+### Checks / conditions
+
+```javascript
+// all()
+// (false)
+Enumerable.create(1, 2, '3', 4)
+          .all('x => typeof x !== "string"');
+          
+// contains()
+// (true)
+Enumerable.create(1, 2, '3')
+          .contains(3);
+
+// any()
+// (true)
+Enumerable.create(1, 2, '3', 4)
+          .any('x => typeof x === "string"');
+ 
+// sequenceEqual()
+// (false)         
+Enumerable.create([1, 2, 3])
+          .sequenceEqual([1, 3, 2]);
+```
+
 ## Implemented "extension" methods
 
 * aggregate()
