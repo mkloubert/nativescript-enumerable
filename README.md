@@ -189,7 +189,7 @@ Enumerable.create(11, 22, 33, 44)
 // 'PZ'
 Enumerable.create()
           .lastOrDefault('PZ');
-          
+
 // single()
 // EXCEPTION, because we have more than one element
 Enumerable.create(11, 22, 33, 44)
@@ -210,6 +210,41 @@ You also can use a function as first argument for all of these methods that work
 // 22
 Enumerable.create(11, 22, 33, 44)
           .first('x => x >= 20');
+```
+
+### Accumulators
+
+```javascript
+// aggregate()
+// "Marcel Joachim Kloubert"
+Enumerable.create('Marcel', 'Joachim', 'Kloubert')
+          .aggregate(function(result, x) {
+                         return result += " " + x;
+                     });
+
+// average()
+// 2.5
+Enumerable.create(1, 2, 3, 4)
+          .average();
+          
+// sum()
+// 10
+Enumerable.create(1, 2, 3, 4)
+          .sum();  
+```
+
+### Minimum / maximum values
+
+```javascript
+// max()
+// 3
+Enumerable.create(1, 3, 2)
+          .max(); 
+          
+// min()
+// 1
+Enumerable.create(2, 3, 1, 2)
+          .min();
 ```
 
 ### Projection
