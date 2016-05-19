@@ -274,6 +274,125 @@ printLine("res.4: " + res4);
 `
     });
     
+    // groupBy()
+    methods.push({
+        title: 'groupBy()',
+        sourceCode: `        
+var groupings = Enumerable
+    .create("grape", "passionfruit", "banana",
+            "apple", "blueberry")
+    .groupBy('x => x[0]');
+
+groupings.each(function(grp) {
+    printLine(grp.key);
+    
+    grp.each(function(x) {
+        printLine("\t" + x);
+    });
+});
+`
+    });
+    
+    // groupJoin()
+    methods.push({
+        title: 'groupJoin()',
+        sourceCode: `        
+var createPerson = function(name) {
+    return {
+        name: name
+    };
+};
+
+var createPet = function(name, owner) {
+    return {
+        name: name,
+        owner: owner
+    };
+};
+
+var persons = [
+    createPerson("Tanja"),
+    createPerson("Marcel"),
+    createPerson("Yvonne"),
+    createPerson("Josefine")
+];
+
+var pets = [
+    createPet("Gina", persons[1]),
+    createPet("Schnuffi", persons[1]),
+    createPet("Schnuffel", persons[2]),
+    createPet("WauWau", persons[0]),
+    createPet("Lulu", persons[3]),
+    createPet("Asta", persons[1])
+];
+
+var seq = Enumerable.fromArray(persons)
+    .groupJoin(pets,
+               'person => person.name',
+               'pet => pet.owner.name',
+               function(person, petsOfPerson) {
+                   var petList = petsOfPerson
+                       .select('pet => pet.name')
+                       .aggregate(function(result, petName) {
+                                      return result += ", " + petName;
+                                  });
+
+                   return 'Owner: ' + person.name + '; Pets: ' + petList;
+               });
+ 
+seq.each(function(x) {
+    printLine("- " + x);    
+});               
+`
+    });
+    
+        // join()
+    methods.push({
+        title: 'join()',
+        sourceCode: `        
+var createPerson = function(name) {
+    return {
+        name: name
+    };
+};
+
+var createPet = function(name, owner) {
+    return {
+        name: name,
+        owner: owner
+    };
+};
+
+var persons = [
+    createPerson("Tanja"),
+    createPerson("Marcel"),
+    createPerson("Yvonne"),
+    createPerson("Josefine")
+];
+
+var pets = [
+    createPet("Gina", persons[1]),
+    createPet("Schnuffi", persons[1]),
+    createPet("Schnuffel", persons[2]),
+    createPet("WauWau", persons[0]),
+    createPet("Lulu", persons[3]),
+    createPet("Asta", persons[1])
+];
+
+var seq = Enumerable.fromArray(persons)
+    .join(pets,
+          'person => person.name',
+          'pet => pet.owner.name',
+          function(person, pet) {
+              return 'Owner: ' + person.name + '; Pet: ' + pet.name;
+          });
+               
+seq.each(function(x) {
+    printLine("- " + x);    
+});               
+`
+    });
+    
     // last()
     methods.push({
         title: 'last()',

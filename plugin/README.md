@@ -295,14 +295,16 @@ var pets = [
 // [1] 'Owner: Marcel; Pets: Gina, Schnuffi, Asta'
 // [2] 'Owner: Yvonne; Pets: Schnuffel'
 // [3] 'Owner: Josefine; Pets: Lulu'
-Enumerable.create(persons)
+Enumerable.fromArray(persons)
           .groupJoin(pets,
                      'person => person.name',
                      'pet => pet.owner.name',
                      function(person, petsOfPerson) {
-                         var petList = petsOfPerson.aggregate(function(result, pet) {
-                             return result += ", " + pet.name;
-                         });
+                         var petList = petsOfPerson
+                             .select('pet => pet.name')
+                             .aggregate(function(result, petName) {
+                                            return result += ", " + petName;
+                                        });
                      
                          return 'Owner: ' + person.name + '; Pets: ' + petList;
                      });
@@ -315,7 +317,7 @@ Enumerable.create(persons)
 // [3] 'Owner: Marcel; Pet: Asta'
 // [4] 'Owner: Yvonne; Pet: Schnuffel'
 // [5] 'Owner: Josefine; Pet: Lulu'
-Enumerable.create(persons)
+Enumerable.fromArray(persons)
           .join(pets,
                 'person => person.name',
                 'pet => pet.owner.name',

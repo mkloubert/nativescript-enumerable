@@ -462,14 +462,18 @@ enumerableMethods.any = function(predicate) {
 enumerableMethods.aggregate = function(accumulator, defaultValue) {
     accumulator = asFunc(accumulator);
     
+    var index = -1;
     var aggResult = defaultValue;
     var isFirst = true;
     while (this.moveNext()) {
+        var ctx = createEnumerableContext(this, ++index);
+        
         if (!isFirst) {
-            aggResult = accumulator(aggResult, this.current);
+            aggResult = accumulator(aggResult,
+                                    ctx.item, ctx.index, ctx);
         }
         else {
-            aggResult = this.current;
+            aggResult = ctx.item;
             isFirst = false;
         }
     }
