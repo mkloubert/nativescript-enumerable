@@ -79,6 +79,10 @@ where('x => x !== null')
 
 instead.
 
+## Documentation
+
+Take a look at the [plugin/index.js](https://github.com/mkloubert/nativescript-enumerable/blob/master/plugin/index.js) file to get detailed information about all methods (search for `enumerable method templates`).
+
 ## Examples
 
 ### Filters
@@ -424,52 +428,6 @@ Enumerable.create(0, 1, 2)
 Enumerable.create()
           .defaultIfEmpty('PZ', 'TM', 'MK');
 ```
-
-
-## Implemented "extension" methods
-
-* aggregate()
-* all()
-* any()
-* average()
-* concat()
-* contains()
-* count()
-* defaultIfEmpty()
-* distinct()
-* elementAt()
-* elementAtOrDefault()
-* except()
-* first()
-* firstOrDefault()
-* groupBy()
-* groupJoin()
-* intersect()
-* join()
-* last()
-* lastOrDefault()
-* max()
-* min()
-* ofType()
-* orderBy()
-* orderByDescending()
-* reverse()
-* select()
-* selectMany()
-* sequenceEqual()
-* single()
-* singleOrDefault()
-* skip()
-* skipWhile()
-* sum()
-* take()
-* takeWhile()
-* toArray()
-* union()
-* where()
-* zip()
-
-Take a look at the [plugin/index.js](https://github.com/mkloubert/nativescript-enumerable/blob/master/plugin/index.js) file to get detailed information about all methods (search for `enumerable method templates`).
 
 ## Roadmap
 
