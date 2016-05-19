@@ -468,3 +468,16 @@ Enumerable.create(0, 1, 2)
 Enumerable.create()
           .defaultIfEmpty('PZ', 'TM', 'MK');
 ```
+
+#### reset
+
+```javascript
+Enumerable.create(0, 1, 2)
+          .each(function(x) {
+                    console.log(x);
+                })
+          .reset()
+          .each(function(x) {
+                    console.log(x * 2);
+                });
+```
