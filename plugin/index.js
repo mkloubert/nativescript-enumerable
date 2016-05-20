@@ -232,7 +232,10 @@ function setupEnumerable(enumerable, opts) {
     });
     
     enumerable.moveNext = opts.moveNext;
-    enumerable.reset = opts.reset;
+    enumerable.reset = function() {
+        opts.reset();
+        return enumerable;
+    };
     
     for (var p in enumerableMethods) {
         enumerable[p] = enumerableMethods[p];

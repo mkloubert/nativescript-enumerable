@@ -491,12 +491,14 @@ while (seq.moveNext()) {
 #### reset
 
 ```javascript
-Enumerable.create(0, 1, 2)
-          .each(function(x) {
-                    console.log(x);
-                })
-          .reset()
-          .each(function(x) {
-                    console.log(x * 2);
-                });
+var seq = Enumerable.create(0, 1, 2);
+
+seq.each(function(x) {
+             console.log(x);
+         });
+
+seq.reset()
+   .each(function(x) {
+             console.log(x * 2);
+         });
 ```
