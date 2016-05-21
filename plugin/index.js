@@ -2,11 +2,23 @@
 // 
 // Copyright (c) Marcel Joachim Kloubert <marcel.kloubert@gmx.net>
 // 
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 // 
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 // 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 var Observable = require("data/observable").Observable;
 var ObservableArray = require("data/observable-array").ObservableArray;
@@ -235,9 +247,6 @@ function setupEnumerable(enumerable, opts) {
         opts.reset();
         return enumerable;
     };
-
-    // DO NOT USE THIS
-    enumerable.__AE81792B3F554A3DA7BCEE8D695EB429 = 'UvIQTaBP';
 }
 
 function setupOrderedEnumerable(orderedEnumerable, opts) {
@@ -267,9 +276,9 @@ function fromArray(arr) {
     var enumerable = new Sequence();
     
     var index;
-    setupEnumerable(enumerable, {
-        current: function() { return arr[index]; },
-        
+    var opts = {
+        key: function() { return index; },
+
         isValid: function() {
             if (arr.length < 1) {
                 return false;
@@ -282,9 +291,7 @@ function fromArray(arr) {
             
             return arr.length - i > 0;
         },
-        
-        key: function() { return index; },
-        
+           
         moveNext: function() {
             if (index === undefined) {
                 index = -1;
@@ -294,7 +301,16 @@ function fromArray(arr) {
         },
         
         reset: function() { index = undefined; }
-    });
+    };
+    
+    if (arr instanceof ObservableArray) {
+        opts.current = function() { return arr.getItem(index); };
+    }
+    else {
+        opts.current = function() { return arr[index]; };
+    }
+    
+    setupEnumerable(enumerable, opts);
     
     return enumerable;
 }
@@ -449,8 +465,7 @@ exports.repeat = repeat;
  * @return {Boolean} Is sequence or not.
  */
 function isEnumerable(v) {
-    return v &&
-           v.__AE81792B3F554A3DA7BCEE8D695EB429 === 'UvIQTaBP';
+    return v instanceof Sequence;
 };
 exports.isEnumerable = isEnumerable;
 
@@ -465,7 +480,10 @@ exports.isEnumerable = isEnumerable;
  * @return any The value as sequence or (false) if input value is no valid object.
  */
 function asEnumerable(v, throwException) {
-    if ((v instanceof Array) || !v) {
+    if ((v instanceof Array) || 
+        (v instanceof ObservableArray) ||
+        !v) {
+        
         return fromArray(v);
     }
     
