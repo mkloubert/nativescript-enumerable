@@ -11,7 +11,6 @@
 var Observable = require("data/observable").Observable;
 var ObservableArray = require("data/observable-array").ObservableArray;
 
-var enumerableMethods = {};
 var orderedEnumerableMethods = {};
 
 /**
@@ -236,11 +235,7 @@ function setupEnumerable(enumerable, opts) {
         opts.reset();
         return enumerable;
     };
-    
-    for (var p in enumerableMethods) {
-        enumerable[p] = enumerableMethods[p];
-    }
-    
+
     // DO NOT USE THIS
     enumerable.__AE81792B3F554A3DA7BCEE8D695EB429 = 'UvIQTaBP';
 }
@@ -262,14 +257,14 @@ function setupOrderedEnumerable(orderedEnumerable, opts) {
  * 
  * @param {Array} arr The array.
  * 
- * @return {Object} The new sequence.
+ * @return {Sequence} The new sequence.
  */
 function fromArray(arr) {
     if (arguments.length < 1) {
         arr = [];
     }
     
-    var enumerable = {};
+    var enumerable = new Sequence();
     
     var index;
     setupEnumerable(enumerable, {
@@ -312,14 +307,14 @@ exports.fromArray = fromArray;
  * 
  * @param {Object} obj The object.
  * 
- * @return {Object} The new sequence.
+ * @return {Sequence} The new sequence.
  */
 function fromObject(obj) {
     if (arguments.length < 1) {
         obj = {};
     }
     
-    var enumerable = {};
+    var enumerable = new Sequence();
     
     var properties = [];
     for (var p in obj) {
@@ -369,7 +364,7 @@ exports.fromObject = fromObject;
  * 
  * @param {Array} arr The array.
  * 
- * @return {Object} The new sequence.
+ * @return {Sequence} The new sequence.
  */
 function create() {
     return fromArray(arguments);
@@ -508,6 +503,13 @@ exports.asEnumerable = asEnumerable;
 
 // ---------- enumerable method templates ----------
 
+function Sequence() {
+    if (!(this instanceof Sequence)) {
+        return new Sequence();
+    }
+}
+exports.Sequence = Sequence;
+
 /**
  * Checks if all elements of the sequence match a condition.
  *
@@ -517,7 +519,7 @@ exports.asEnumerable = asEnumerable;
  * 
  * @return {Boolean} All items match condition or not. If sequence is empty (true) is returned.
  */
-enumerableMethods.all = function(predicate) {
+Sequence.prototype.all = function(predicate) {
     predicate = asFunc(predicate);
     
     while (this.moveNext()) {
@@ -539,7 +541,7 @@ enumerableMethods.all = function(predicate) {
  * @return {Boolean} At least one element was found that matches the condition.
  *                   If condition is not defined, the method checks if sequence contains at least one element.
  */
-enumerableMethods.any = function(predicate) {
+Sequence.prototype.any = function(predicate) {
     predicate = toPredicateSafe(predicate);
     
     while (this.moveNext()) {
@@ -561,7 +563,7 @@ enumerableMethods.any = function(predicate) {
  * 
  * @return any The final accumulator value or the default value.
  */
-enumerableMethods.aggregate = function(accumulator, defaultValue) {
+Sequence.prototype.aggregate = function(accumulator, defaultValue) {
     accumulator = asFunc(accumulator);
     
     var index = -1;
@@ -592,7 +594,7 @@ enumerableMethods.aggregate = function(accumulator, defaultValue) {
  * 
  * @return any The average of the sequence or the default value.
  */
-enumerableMethods.average = function(defaultValue) {
+Sequence.prototype.average = function(defaultValue) {
     var cnt = 0;
     var sum = 0;
     while (this.moveNext()) {
@@ -613,7 +615,7 @@ enumerableMethods.average = function(defaultValue) {
  * 
  * @return any The new sequence with the casted items.
  */
-enumerableMethods.cast = function(type) {
+Sequence.prototype.cast = function(type) {
     if (type !== null) {
         if (type === undefined) {
             type = "";
@@ -714,7 +716,7 @@ enumerableMethods.cast = function(type) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.concat = function(second) {
+Sequence.prototype.concat = function(second) {
     second = asEnumerable(second);
     
     var newItems = [];
@@ -741,7 +743,7 @@ enumerableMethods.concat = function(second) {
  * 
  * @return {Boolean} Contains item or not.
  */
-enumerableMethods.contains = function(item, equalityComparer) {
+Sequence.prototype.contains = function(item, equalityComparer) {
     equalityComparer = toEqualityComparerSafe(equalityComparer);
     
     return this.any(function(x) {
@@ -758,7 +760,7 @@ enumerableMethods.contains = function(item, equalityComparer) {
  * 
  * @return {Number} The number of (matching) elements.
  */
-enumerableMethods.count = function(predicate) {
+Sequence.prototype.count = function(predicate) {
     predicate = toPredicateSafe(predicate);
 
     var cnt = 0;
@@ -780,7 +782,7 @@ enumerableMethods.count = function(predicate) {
  * 
  * @return {Object} A default sequence or that sequence if it is not empty.
  */
-enumerableMethods.defaultIfEmpty = function() {
+Sequence.prototype.defaultIfEmpty = function() {
     if (!this.isValid) {
         return fromArray(arguments);
     }
@@ -799,7 +801,7 @@ enumerableMethods.defaultIfEmpty = function() {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.distinct = function(equalityComparer) {
+Sequence.prototype.distinct = function(equalityComparer) {
     equalityComparer = toEqualityComparerSafe(equalityComparer);
     
     var distinctedItems = [];
@@ -833,7 +835,7 @@ enumerableMethods.distinct = function(equalityComparer) {
  * 
  * @return any The result of the last execution.
  */
-enumerableMethods.each = function(action) {
+Sequence.prototype.each = function(action) {
     action = asFunc(action);
     
     var index = -1;
@@ -858,7 +860,7 @@ enumerableMethods.each = function(action) {
  * 
  * @return any The element.
  */
-enumerableMethods.elementAt = function(index) {
+Sequence.prototype.elementAt = function(index) {
     return this.first(function(x, i) {
         return i == index;
     });
@@ -874,7 +876,7 @@ enumerableMethods.elementAt = function(index) {
  * 
  * @return any The element or the default value.
  */
-enumerableMethods.elementAtOrDefault = function(index, defaultValue) {
+Sequence.prototype.elementAtOrDefault = function(index, defaultValue) {
     return this.firstOrDefault(function(x, i) {
         return i == index;
     }, defaultValue);
@@ -892,7 +894,7 @@ enumerableMethods.elementAtOrDefault = function(index, defaultValue) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.except = function(second, equalityComparer) {
+Sequence.prototype.except = function(second, equalityComparer) {
     equalityComparer = toEqualityComparerSafe(equalityComparer);
     
     second = asEnumerable(second).distinct(equalityComparer)
@@ -931,7 +933,7 @@ enumerableMethods.except = function(second, equalityComparer) {
  * 
  * @return any The first (matching) element.
  */
-enumerableMethods.first = function(predicate) {
+Sequence.prototype.first = function(predicate) {
     predicate = toPredicateSafe(predicate);
     
     var index = -1;
@@ -957,7 +959,7 @@ enumerableMethods.first = function(predicate) {
  * 
  * @return any The first (matching) element or the default value.
  */
-enumerableMethods.firstOrDefault = function(predicateOrDefaultValue, defaultValue) {
+Sequence.prototype.firstOrDefault = function(predicateOrDefaultValue, defaultValue) {
     var odObj = createObjectForOrDefaultMethod(arguments);
     
     var index = -1;
@@ -984,7 +986,7 @@ enumerableMethods.firstOrDefault = function(predicateOrDefaultValue, defaultValu
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.groupBy = function(keySelector, keyEqualityComparer) {
+Sequence.prototype.groupBy = function(keySelector, keyEqualityComparer) {
     keySelector = asFunc(keySelector);
     keyEqualityComparer = toEqualityComparerSafe(keyEqualityComparer);
     
@@ -1040,10 +1042,10 @@ enumerableMethods.groupBy = function(keySelector, keyEqualityComparer) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.groupJoin = function(inner,
-                                       outerKeySelector, innerKeySelector,
-                                       resultSelector,
-                                       keyEqualityComparer) {
+Sequence.prototype.groupJoin = function(inner,
+                                        outerKeySelector, innerKeySelector,
+                                        resultSelector,
+                                        keyEqualityComparer) {
                                       
     inner = asEnumerable(inner);
     
@@ -1098,7 +1100,7 @@ enumerableMethods.groupJoin = function(inner,
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.intersect = function(second, equalityComparer) {
+Sequence.prototype.intersect = function(second, equalityComparer) {
     equalityComparer = toEqualityComparerSafe(equalityComparer);
     
     second = asEnumerable(second).distinct(equalityComparer)
@@ -1137,10 +1139,10 @@ enumerableMethods.intersect = function(second, equalityComparer) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.join = function(inner,
-                                  outerKeySelector, innerKeySelector,
-                                  resultSelector,
-                                  keyEqualityComparer) {
+Sequence.prototype.join = function(inner,
+                                   outerKeySelector, innerKeySelector,
+                                   resultSelector,
+                                   keyEqualityComparer) {
                                       
     inner = asEnumerable(inner);
     
@@ -1196,7 +1198,7 @@ enumerableMethods.join = function(inner,
  * 
  * @return any The last (matching) element.
  */
-enumerableMethods.last = function(predicate) {
+Sequence.prototype.last = function(predicate) {
     predicate = toPredicateSafe(predicate);
     
     var index = -1;
@@ -1229,7 +1231,7 @@ enumerableMethods.last = function(predicate) {
  * 
  * @return any The last (matching) element or the default value.
  */
-enumerableMethods.lastOrDefault = function(predicateOrDefaultValue, defaultValue) {
+Sequence.prototype.lastOrDefault = function(predicateOrDefaultValue, defaultValue) {
     var odObj = createObjectForOrDefaultMethod(arguments);
     
     var index = -1;
@@ -1254,7 +1256,7 @@ enumerableMethods.lastOrDefault = function(predicateOrDefaultValue, defaultValue
  * 
  * @return any The maximum or the default value.
  */
-enumerableMethods.max = function(defaultValue) {
+Sequence.prototype.max = function(defaultValue) {
     return this.aggregate(function(result, x) {
         if (x > result) {
             result = x;
@@ -1273,7 +1275,7 @@ enumerableMethods.max = function(defaultValue) {
  * 
  * @return any The minimum or the default value.
  */
-enumerableMethods.min = function(defaultValue) {
+Sequence.prototype.min = function(defaultValue) {
     return this.aggregate(function(result, x) {
         if (x < result) {
             result = x;
@@ -1292,7 +1294,7 @@ enumerableMethods.min = function(defaultValue) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.ofType = function(type) {
+Sequence.prototype.ofType = function(type) {
     type = ("" + type).replace(/^\s+|\s+$/gm, '');
     
     var checkType = function(x) {
@@ -1337,7 +1339,7 @@ enumerableMethods.ofType = function(type) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.order = function(comparer) {
+Sequence.prototype.order = function(comparer) {
     return this.orderBy('x => x', comparer);
 };
 
@@ -1353,7 +1355,7 @@ enumerableMethods.order = function(comparer) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.orderBy = function(selector, comparer) {
+Sequence.prototype.orderBy = function(selector, comparer) {
     comparer = toComparerSafe(comparer);
     
     if (true === selector) {
@@ -1398,7 +1400,7 @@ enumerableMethods.orderBy = function(selector, comparer) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.orderDescending = function(comparer) {
+Sequence.prototype.orderDescending = function(comparer) {
     return this.orderByDescending('x => x', comparer);
 };
 
@@ -1414,7 +1416,7 @@ enumerableMethods.orderDescending = function(comparer) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.orderByDescending = function(selector, comparer) {
+Sequence.prototype.orderByDescending = function(selector, comparer) {
     comparer = toComparerSafe(comparer);
     
     return this.orderBy(selector,
@@ -1430,7 +1432,7 @@ enumerableMethods.orderByDescending = function(selector, comparer) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.reverse = function() {
+Sequence.prototype.reverse = function() {
     var reverseItems = [];
     while (this.moveNext()) {
         reverseItems.unshift(this.current);
@@ -1450,7 +1452,7 @@ enumerableMethods.reverse = function() {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.select = function(selector) {
+Sequence.prototype.select = function(selector) {
     this.__6C0F8FF9E35 = asFunc(selector);
     return this;
 };
@@ -1466,7 +1468,7 @@ enumerableMethods.select = function(selector) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.selectMany = function(selector) {
+Sequence.prototype.selectMany = function(selector) {
     selector = asFunc(selector);
     
     var flattenItems = [];
@@ -1494,7 +1496,7 @@ enumerableMethods.selectMany = function(selector) {
  * 
  * @return {Boolean} Both sequences are the same or not
  */
-enumerableMethods.sequenceEqual = function(other, equalityComparer) {
+Sequence.prototype.sequenceEqual = function(other, equalityComparer) {
     other = asEnumerable(other);
     equalityComparer = toEqualityComparerSafe(equalityComparer);
     
@@ -1530,7 +1532,7 @@ enumerableMethods.sequenceEqual = function(other, equalityComparer) {
  * 
  * @return any The only (matching) element or the default value.
  */
-enumerableMethods.single = function(predicate) {
+Sequence.prototype.single = function(predicate) {
     predicate = toPredicateSafe(predicate);
 
     var item;
@@ -1566,7 +1568,7 @@ enumerableMethods.single = function(predicate) {
  * 
  * @return any The only (matching) element or the default value.
  */
-enumerableMethods.singleOrDefault = function(predicateOrDefaultValue, defaultValue) {
+Sequence.prototype.singleOrDefault = function(predicateOrDefaultValue, defaultValue) {
     var odObj = createObjectForOrDefaultMethod(arguments);
     
     var item = odObj.defaultValue;
@@ -1595,7 +1597,7 @@ enumerableMethods.singleOrDefault = function(predicateOrDefaultValue, defaultVal
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.skip = function(cnt) {
+Sequence.prototype.skip = function(cnt) {
     return this.skipWhile(function() {
         if (cnt > 0) {
             --cnt;
@@ -1617,7 +1619,7 @@ enumerableMethods.skip = function(cnt) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.skipWhile = function(predicate) {
+Sequence.prototype.skipWhile = function(predicate) {
     var predicate = asFunc(predicate);
     
     var newItems = [];
@@ -1648,7 +1650,7 @@ enumerableMethods.skipWhile = function(predicate) {
  * 
  * @return any The sum or the default value.
  */
-enumerableMethods.sum = function(defaultValue) {
+Sequence.prototype.sum = function(defaultValue) {
     return this.aggregate(function(result, x) {
         return result + x;
     }, defaultValue);
@@ -1663,7 +1665,7 @@ enumerableMethods.sum = function(defaultValue) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.take = function(cnt) {
+Sequence.prototype.take = function(cnt) {
     return this.takeWhile(function() {
         if (cnt > 0) {
             --cnt;
@@ -1685,7 +1687,7 @@ enumerableMethods.take = function(cnt) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.takeWhile = function(predicate) {
+Sequence.prototype.takeWhile = function(predicate) {
     var predicate = asFunc(predicate);
     
     var newItems = [];
@@ -1711,7 +1713,7 @@ enumerableMethods.takeWhile = function(predicate) {
  * 
  * @return {Array} The sequence as new array.
  */
-enumerableMethods.toArray = function() {
+Sequence.prototype.toArray = function() {
     var arr = [];
     while (this.moveNext()) {
         arr.push(this.current);
@@ -1731,7 +1733,7 @@ enumerableMethods.toArray = function() {
  * 
  * @return {Object} The new object.
  */
-enumerableMethods.toObject = function(keySelector) {
+Sequence.prototype.toObject = function(keySelector) {
     if (arguments.length < 1) {
         keySelector = function(item, index, key) {
             return key;
@@ -1762,7 +1764,7 @@ enumerableMethods.toObject = function(keySelector) {
  * 
  * @return {Observable} The new object.
  */
-enumerableMethods.toObservable = function(keySelector) {
+Sequence.prototype.toObservable = function(keySelector) {
     if (arguments.length < 1) {
         keySelector = function(item, index, key) {
             return key;
@@ -1789,7 +1791,7 @@ enumerableMethods.toObservable = function(keySelector) {
  * 
  * @return {ObservableArray} The new array.
  */
-enumerableMethods.toObservableArray = function() {
+Sequence.prototype.toObservableArray = function() {
     return new ObservableArray(this.toArray());
 };
 
@@ -1805,7 +1807,7 @@ enumerableMethods.toObservableArray = function() {
  * 
  * @return {Object} The lookup array.
  */
-enumerableMethods.toLookup = function(keySelector, keyEqualityComparer) {
+Sequence.prototype.toLookup = function(keySelector, keyEqualityComparer) {
     var lu = {};
     this.groupBy(keySelector, keyEqualityComparer)
         .each(function(grouping) {
@@ -1828,7 +1830,7 @@ enumerableMethods.toLookup = function(keySelector, keyEqualityComparer) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.union = function(second, equalityComparer) {
+Sequence.prototype.union = function(second, equalityComparer) {
     return this.concat(second)
                .distinct(equalityComparer);
 };
@@ -1844,7 +1846,7 @@ enumerableMethods.union = function(second, equalityComparer) {
  * 
  * @return {Array} The sequence as new array.
  */
-enumerableMethods.where = function(predicate) {
+Sequence.prototype.where = function(predicate) {
     predicate = asFunc(predicate);
 
     var filteredItems = [];
@@ -1874,7 +1876,7 @@ enumerableMethods.where = function(predicate) {
  * 
  * @return {Object} The new sequence.
  */
-enumerableMethods.zip = function(second, selector) {
+Sequence.prototype.zip = function(second, selector) {
     second = asEnumerable(second);
     selector = asFunc(selector);
     
