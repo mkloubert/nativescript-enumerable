@@ -346,6 +346,24 @@ printLine("res.4: " + res4);
 `
     });
     
+    // fromArray()
+    methods.push({
+        title: 'fromArray()',
+        sourceCode: `        
+Enumerable.fromArray([1, 2, 3, 4, 5])
+          .each(function(x, i) {
+                    printLine("Array[" + i + "]: " + x);
+                });
+
+printLine();
+
+Enumerable.fromArray(new ObservableArray([11, 22, 33, 44, 55]))
+          .each(function(x, i) {
+                    printLine("ObservableArray[" + i + "]: " + x);
+                });
+`
+    });
+    
     // groupBy()
     methods.push({
         title: 'groupBy()',

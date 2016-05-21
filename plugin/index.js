@@ -251,7 +251,9 @@ function setupEnumerable(enumerable, opts) {
 
 function setupOrderedEnumerable(orderedEnumerable, opts) {
     for (var p in orderedEnumerableMethods) {
-        orderedEnumerable[p] = orderedEnumerableMethods[p];
+        if (orderedEnumerableMethods.hasOwnProperty(p)) {
+            orderedEnumerable[p] = orderedEnumerableMethods[p];    
+        }
     }
     
     orderedEnumerable.__0CDF3D959A20 = opts.selector;
