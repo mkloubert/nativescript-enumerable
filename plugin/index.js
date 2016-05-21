@@ -500,8 +500,25 @@ function asEnumerable(v, throwException) {
 }
 exports.asEnumerable = asEnumerable;
 
+/**
+ * Short hand version for 'each' method of a sequence.
+ *
+ * @function each
+ * 
+ * @param any items The sequence of items to iterate.
+ * @param any action The action to invoke for each item.
+ * 
+ * @throws At least one argument is invalid.
+ * 
+ * @return any The result of the last invocation.
+ */
+function each(items, action) {
+    return asEnumerable(items).each(action);
+}
+exports.each = each;
 
-// ---------- enumerable method templates ----------
+
+// ---------- enumerable method templates (Sequence) ----------
 
 function Sequence() {
     if (!(this instanceof Sequence)) {

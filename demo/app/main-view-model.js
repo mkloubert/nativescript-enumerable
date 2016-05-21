@@ -196,16 +196,30 @@ printLine("res.3: " + toStringList(res3));
     methods.push({
         title: 'each()',
         sourceCode: `
-var i = 0;                
-var res = Enumerable.create(1, 2, 3, 2, 4)
+var i;
+
+i = 0;                
+var res1 = Enumerable.create(1, 2, 3, 2, 4)
     .each(function(x, index) {
         printLine(index + ": " + x);
         
         return ++i;    
     });
-    
-printLine("");    
-printLine("res: " + res);
+        
+printLine("\tres.1: " + res1);
+
+printLine("");
+
+i = 0;                
+var res2 = Enumerable.each(
+    [11, 22, 33, 22, 44],
+    function(x, index) {
+        printLine(index + ": " + x);
+        
+        return ++i;    
+    });
+        
+printLine("\tres.2: " + res2);
 `
     });
     
