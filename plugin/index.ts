@@ -528,8 +528,52 @@ export function asEnumerable(v: any, throwException?: boolean) {
 export function each(items, action) {
     return asEnumerable(items).each(action);
 }
-exports.each = each;
 
+/**
+ * Short hand version for 'order(By)' methods of a sequence.
+ *
+ * @function sort
+ * 
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ * 
+ * @throws At least one argument is invalid.
+ * 
+ * @return {Sequence} The sequences with the sorted items.
+ */
+export function sort(items, comparer, selector) {
+    var seq = asEnumerable(items);
+    
+    if (arguments.length < 3) {
+        return seq.order(comparer);
+    }
+    
+    return seq.orderBy(selector, comparer);
+}
+
+/**
+ * Short hand version for 'order(By)Descending' methods of a sequence.
+ *
+ * @function sortDesc
+ * 
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ * 
+ * @throws At least one argument is invalid.
+ * 
+ * @return {Sequence} The sequences with the sorted items.
+ */
+export function sortDesc(items, comparer, selector) {
+    var seq = asEnumerable(items);
+    
+    if (arguments.length < 3) {
+        return seq.orderDescending(comparer);
+    }
+    
+    return seq.orderByDescending(selector, comparer);
+}
 
 // ---------- enumerable method templates (Sequence) ----------
 

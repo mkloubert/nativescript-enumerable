@@ -435,7 +435,48 @@ function each(items, action) {
     return asEnumerable(items).each(action);
 }
 exports.each = each;
-exports.each = each;
+/**
+ * Short hand version for 'order(By)' methods of a sequence.
+ *
+ * @function sort
+ *
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ *
+ * @throws At least one argument is invalid.
+ *
+ * @return {Sequence} The sequences with the sorted items.
+ */
+function sort(items, comparer, selector) {
+    var seq = asEnumerable(items);
+    if (arguments.length < 3) {
+        return seq.order(comparer);
+    }
+    return seq.orderBy(selector, comparer);
+}
+exports.sort = sort;
+/**
+ * Short hand version for 'order(By)Descending' methods of a sequence.
+ *
+ * @function sortDesc
+ *
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ *
+ * @throws At least one argument is invalid.
+ *
+ * @return {Sequence} The sequences with the sorted items.
+ */
+function sortDesc(items, comparer, selector) {
+    var seq = asEnumerable(items);
+    if (arguments.length < 3) {
+        return seq.orderDescending(comparer);
+    }
+    return seq.orderByDescending(selector, comparer);
+}
+exports.sortDesc = sortDesc;
 var Sequence = (function () {
     function Sequence() {
     }
