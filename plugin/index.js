@@ -401,20 +401,25 @@ exports.create = create;
  * @return {Object} The new sequence.
  */
 function range(start, cnt, incrementor) {
-    incrementor = asFunc(incrementor, false);
-    if (false === incrementor) {
-        var incrementBy = incrementor;
-        
-        incrementor = function(x) {
-            return x + incrementBy;
-        };
-    }
-    else if (!incrementor) {
+    if (arguments.length < 3) {
         incrementor = function(x) {
             return x + 1;
         };
     }
-    
+    else {
+        var funcOrValue = asFunc(incrementor, false);
+        if (false === funcOrValue) {
+            var incrementBy = incrementor;
+        
+            incrementor = function(x) {
+                return x + incrementBy;
+            };
+        }
+        else {
+            incrementor = funcOrValue;
+        }
+    }
+
     var numbers = [];
     
     var remainingCnt = cnt;
