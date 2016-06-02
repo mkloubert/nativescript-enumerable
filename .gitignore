@@ -1,2 +1,4 @@
 /demo/platforms
 /demo/node_modules
+/pushall.sh
+/plugin/*.map
