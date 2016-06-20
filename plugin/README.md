@@ -30,8 +30,8 @@ inside your app project to install the module.
 
 ### Create a sequence
 
-```javascript
-var Enumerable = require("nativescript-enumerable");
+```typescript
+import Enumerable = require("nativescript-enumerable");
 
 // from a list of values / objects with variable length
 var seq1 = Enumerable.create(1, 'MK', true, null, {});
@@ -54,17 +54,17 @@ var seq5 = Enumerable.repeat('TM', 50979);
 
 ### Work with them
 
-```javascript
-var seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279);
+```typescript
+import seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279);
 
-var newSeq = seq.where('x => x !== null')  // remove all elements that are (null)
+var newSeq = seq.where((x) => x !== null)  // remove all elements that are (null)
                 .skip(1)  // skip one element (5979)
                 .take(3)  // take next remaining 3 elements (23979, 23979, 1781)
                 .distinct()  // remove duplicates
-                .select('x => "" + x')  // convert to strings
-                .orderBy('x => x');  // order by element ascending
+                .select((x) => "" + x)  // convert to strings
+                .order();  // order by element ascending
 
-newSeq.each(function(item) {
+newSeq.each((item) => {
     // [0] 1781
     // [1] 23979
     console.log(item);
@@ -79,7 +79,7 @@ Many methods require one or more function.
 
 Instead using a function like
 
-```javascript
+```typescript
 .where(function(x) {
            return x !== null;
        })
@@ -87,8 +87,8 @@ Instead using a function like
 
 you can write
 
-```javascript
-where('x => x !== null')
+```typescript
+.where('x => x !== null')
 ```
 
 instead.
@@ -113,7 +113,7 @@ The [wiki](https://github.com/mkloubert/nativescript-enumerable/wiki/Demo-app) d
 
 ### Filters
 
-```javascript
+```typescript
 // distinct()
 // 1, 2, 4, 3
 Enumerable.create(1, 2, 4, 2, 3)
@@ -142,20 +142,21 @@ Enumerable.create(5, 3, 9, 7, 5, 9, 3, 7)
 // where()
 // 1, 2, 3
 Enumerable.create(1, 2, 3, 4)
-          .where('x => x < 4');
+          .where((x) => x < 4);
 ```
 
 ### Sort elements
 
-```javascript
+```typescript
 // orderBy(), thenBy()
 //
 // "apple", "grape", "mango", "banana",
 // "orange", "blueberry", "raspberry", "passionfruit"
 Enumerable.create("grape", "passionfruit", "banana", "mango", 
                   "orange", "raspberry", "apple", "blueberry")
-          .orderBy('x => x.length')  // complement: orderByDescending()
-          .thenBy('x => x');  // complement: thenByDescending()
+          .orderBy((x) => x.length)  // complement: orderByDescending()
+          .thenBy((x) => x);  // complement: thenByDescending()
+                              // shorter: then()
 
 // reverse()
 // 4, 3, 2, 1
@@ -165,7 +166,7 @@ Enumerable.create(1, 2, 3, 4)
 
 ### Take / skip elements
 
-```javascript
+```typescript
 // skip()
 // 3, 4
 Enumerable.create(0, 1, 2, 3, 4)
@@ -174,7 +175,7 @@ Enumerable.create(0, 1, 2, 3, 4)
 // skipWhile()
 // 55, 666, 77
 Enumerable.create(22, 33, 44, 55, 666, 77)
-          .skipWhile('x => x < 50');
+          .skipWhile((x) => x < 50);
           
 // take()
 // 0, 1, 2
@@ -184,12 +185,12 @@ Enumerable.create(0, 1, 2, 3, 4)
 // takeWhile()
 // 22, 33, 44
 Enumerable.create(22, 33, 44, 55)
-          .takeWhile('x => x < 50');
+          .takeWhile((x) => x < 50);
 ```
 
 ### Get one element
 
-```javascript
+```typescript
 // elementAt()
 // 33
 Enumerable.create(11, 22, 33, 44)
@@ -235,20 +236,20 @@ All methods with NO `OrDefault` suffix will throw exceptions if no element was f
 
 You also can use a function as first argument for all of these methods that works as filter / condition:
 
-```javascript
+```typescript
 // first()
 // 22
 Enumerable.create(11, 22, 33, 44)
-          .first('x => x >= 20');
+          .first((x) => x >= 20);
 ```
 
 ### Accumulators
 
-```javascript
+```typescript
 // aggregate()
 // "Marcel Joachim Kloubert"
 Enumerable.create('Marcel', 'Joachim', 'Kloubert')
-          .aggregate(function(result, x) {
+          .aggregate((result: string, x: string) => {
                          return result += " " + x;
                      });
 
@@ -265,7 +266,7 @@ Enumerable.create(1, 2, 3, 4)
 
 ### Minimum / maximum values
 
-```javascript
+```typescript
 // max()
 // 3
 Enumerable.create(1, 3, 2)
@@ -279,34 +280,39 @@ Enumerable.create(2, 3, 1, 2)
 
 ### Joins
 
-```javascript
-var createPerson = function(name) {
-    return {
-        name: name
-    };
-};
+```typescript
+class Person {
+    constructor(name: string) {
+        this.name = name;
+    }
 
-var createPet = function(name, owner) {
-    return {
-        name: name,
-        owner: owner
-    };
-};
+    public name: string;
+}
 
-var persons = [
-    createPerson("Tanja"),
-    createPerson("Marcel"),
-    createPerson("Yvonne"),
-    createPerson("Josefine")
+class Pet: {
+    constructor(name: string, owner: Person) {
+        this.name = name;
+        this.owner = owner;
+    }
+
+    public name: string;
+    public owner: Person;
+}
+
+var persons: Person[] = [
+    new Person("Tanja"),
+    new Person("Marcel"),
+    new Person("Yvonne"),
+    new Person("Josefine")
 ];
 
-var pets = [
-    createPet("Gina", persons[1]),
-    createPet("Schnuffi", persons[1]),
-    createPet("Schnuffel", persons[2]),
-    createPet("WauWau", persons[0]),
-    createPet("Lulu", persons[3]),
-    createPet("Asta", persons[1])
+var pets: Pet[] = [
+    new Pet("Gina", persons[1]),
+    new Pet("Schnuffi", persons[1]),
+    new Pet("Schnuffel", persons[2]),
+    new Pet("WauWau", persons[0]),
+    new Pet("Lulu", persons[3]),
+    new Pet("Asta", persons[1]),
 ];
 
 // groupJoin()
@@ -317,12 +323,12 @@ var pets = [
 // [3] 'Owner: Josefine; Pets: Lulu'
 Enumerable.fromArray(persons)
           .groupJoin(pets,
-                     'person => person.name',
-                     'pet => pet.owner.name',
-                     function(person, petsOfPerson) {
+                     (person: Person) => person.name,
+                     (pet: Pet) => pet.owner.name,
+                     (person: Person, petsOfPerson: Enumerable.IEnumerable<Pet>) => {
                          var petList = petsOfPerson
-                             .select('pet => pet.name')
-                             .aggregate(function(result, petName) {
+                             .select((pet: Pet) => pet.name)
+                             .aggregate((result: string, petName: string) => {
                                             return result += ", " + petName;
                                         });
                      
@@ -339,21 +345,21 @@ Enumerable.fromArray(persons)
 // [5] 'Owner: Josefine; Pet: Lulu'
 Enumerable.fromArray(persons)
           .join(pets,
-                'person => person.name',
-                'pet => pet.owner.name',
-                function(person, pet) {
+                (person: Person) => person.name,
+                (pet: Pet) => pet.owner.name,
+                (person: Person, pet: Pet) => {
                     return 'Owner: ' + person.name + '; Pet: ' + pet.name;
                 });
 ```
 
 ### Groupings
 
-```javascript
+```typescript
 // groupBy()
 Enumerable.create("grape", "passionfruit", "banana",
                   "apple", "blueberry")
-          .groupBy('x => x[0]')
-          .each(function(grouping) {
+          .groupBy((x: string) => x[0])
+          .each(function(grouping: Enumerable.IGrouping<string, string>) {
                     // grouping[0].key = 'g'
                     // grouping[0][0] = 'grape'
                     
@@ -371,33 +377,33 @@ Enumerable.create("grape", "passionfruit", "banana",
 
 ### Projection
 
-```javascript
+```typescript
 // select()
 // "MARCEL", "KLOUBERT"
 Enumerable.create("Marcel", "Kloubert")
-          .select('x => x.toUpperCase()');
+          .select((x: string) => x.toUpperCase());
           
 // selectMany()
 // 1, 10, 100, 2, 20, 200, 3, 30, 300
 Enumerable.create(1, 2, 3)
-          .selectMany('x => [x, x * 10, x * 100]');
+          .selectMany((x: number) => [x, x * 10, x * 100]);
 
 // zip()
 // "Marcel Kloubert", "Bill Gates", "Albert Einstein"
 Enumerable.create('Marcel', 'Bill', 'Albert')
           .zip(['Kloubert', 'Gates', 'Einstein', 'Adenauer'],
-               function(firstName, lastName) {
+               (firstName: string, lastName: string) => {
                    return firstName + " " + lastName;
                });
 ```
 
 ### Checks / conditions
 
-```javascript
+```typescript
 // all()
 // (false)
 Enumerable.create(1, 2, '3', 4)
-          .all('x => typeof x !== "string"');
+          .all((x) => typeof x !== "string");
           
 // contains()
 // (true)
@@ -407,7 +413,7 @@ Enumerable.create(1, 2, '3')
 // any()
 // (true)
 Enumerable.create(1, 2, '3', 4)
-          .any('x => typeof x === "string"');
+          .any((x) => typeof x === "string");
  
 // sequenceEqual()
 // (false)         
@@ -417,18 +423,18 @@ Enumerable.create([1, 2, 3])
 
 ### Conversions
 
-```javascript
+```typescript
 // toArray()
 var jsArray = Enumerable.create(1, 2, 3, 4)
                         .toArray();
   
 // toObject()
 var obj = Enumerable.create(1, 2, 3, 4)
-                    .toObject('(item, index) => "item" + index');  
+                    .toObject((item, index) => "item" + index);  
   
 // toObservable()
 var o = Enumerable.create(1, 2, 3, 4)
-                  .toObservable('(item, index) => "item" + index');
+                  .toObservable((item, index) => "item" + index);
   
 // toObservableArray()
 var oa = Enumerable.create(1, 2, 3, 4)
@@ -442,26 +448,26 @@ var oa = Enumerable.create(1, 2, 3, 4)
 // lookup['K'][0] = 'Konrad'
 // lookup['M'][0] = 'Marcel'
 var lookup = Enumerable.create('Bill', 'Marcel', 'Barney', 'Albert', 'Konrad')
-                       .toLookup('x => x[0]');
+                       .toLookup((x: string) => x[0]);
 ```
 
 ### Count
 
-```javascript
+```typescript
 // 3
 Enumerable.create(0, 1, 2)
           .count();
           
 // 2
 Enumerable.create(0, 1, 2)
-          .count('x => x > 0');
+          .count((x) => x > 0);
 ```
 
 ### More
 
 #### concat
 
-```javascript
+```typescript
 // 0, 1, 2, 'PZ', 'TM', 'MK'
 Enumerable.create(0, 1, 2)
           .concat(['PZ', 'TM', 'MK']);
@@ -469,7 +475,7 @@ Enumerable.create(0, 1, 2)
 
 #### defaultIfEmpty
 
-```javascript
+```typescript
 // 0, 1, 2
 Enumerable.create(0, 1, 2)
           .defaultIfEmpty('PZ', 'TM', 'MK');
@@ -481,7 +487,7 @@ Enumerable.create()
 
 #### moveNext / current
 
-```javascript
+```typescript
 var seq = Enumerable.create(0, 1, 2);
 while (seq.moveNext()) {
     console.log(seq.current);
@@ -490,15 +496,15 @@ while (seq.moveNext()) {
 
 #### reset
 
-```javascript
+```typescript
 var seq = Enumerable.create(0, 1, 2);
 
-seq.each(function(x) {
+seq.each((x: number) => {
              console.log(x);
          });
 
 seq.reset()
-   .each(function(x) {
+   .each((x: number) => {
              console.log(x * 2);
          });
 ```

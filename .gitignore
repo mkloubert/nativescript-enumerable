@@ -2,3 +2,4 @@
 /demo/node_modules
 /pushall.sh
 /plugin/*.map
+/demo/app/*.map
