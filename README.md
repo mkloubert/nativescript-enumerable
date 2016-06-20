@@ -57,14 +57,14 @@ var seq5 = Enumerable.repeat('TM', 50979);
 ```typescript
 import seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279);
 
-var newSeq = seq.where('x => x !== null')  // remove all elements that are (null)
+var newSeq = seq.where((x) => x !== null)  // remove all elements that are (null)
                 .skip(1)  // skip one element (5979)
                 .take(3)  // take next remaining 3 elements (23979, 23979, 1781)
                 .distinct()  // remove duplicates
-                .select('x => "" + x')  // convert to strings
-                .orderBy('x => x');  // order by element ascending
+                .select((x) => "" + x)  // convert to strings
+                .order();  // order by element ascending
 
-newSeq.each(function(item) {
+newSeq.each((item) => {
     // [0] 1781
     // [1] 23979
     console.log(item);
@@ -142,7 +142,7 @@ Enumerable.create(5, 3, 9, 7, 5, 9, 3, 7)
 // where()
 // 1, 2, 3
 Enumerable.create(1, 2, 3, 4)
-          .where('x => x < 4');
+          .where((x) => x < 4);
 ```
 
 ### Sort elements
@@ -154,8 +154,9 @@ Enumerable.create(1, 2, 3, 4)
 // "orange", "blueberry", "raspberry", "passionfruit"
 Enumerable.create("grape", "passionfruit", "banana", "mango", 
                   "orange", "raspberry", "apple", "blueberry")
-          .orderBy('x => x.length')  // complement: orderByDescending()
-          .thenBy('x => x');  // complement: thenByDescending()
+          .orderBy((x) => x.length)  // complement: orderByDescending()
+          .thenBy((x) => x);  // complement: thenByDescending()
+                              // shorter: then()
 
 // reverse()
 // 4, 3, 2, 1
@@ -174,7 +175,7 @@ Enumerable.create(0, 1, 2, 3, 4)
 // skipWhile()
 // 55, 666, 77
 Enumerable.create(22, 33, 44, 55, 666, 77)
-          .skipWhile('x => x < 50');
+          .skipWhile((x) => x < 50);
           
 // take()
 // 0, 1, 2
@@ -184,7 +185,7 @@ Enumerable.create(0, 1, 2, 3, 4)
 // takeWhile()
 // 22, 33, 44
 Enumerable.create(22, 33, 44, 55)
-          .takeWhile('x => x < 50');
+          .takeWhile((x) => x < 50);
 ```
 
 ### Get one element
@@ -239,7 +240,7 @@ You also can use a function as first argument for all of these methods that work
 // first()
 // 22
 Enumerable.create(11, 22, 33, 44)
-          .first('x => x >= 20');
+          .first((x) => x >= 20);
 ```
 
 ### Accumulators
@@ -248,7 +249,7 @@ Enumerable.create(11, 22, 33, 44)
 // aggregate()
 // "Marcel Joachim Kloubert"
 Enumerable.create('Marcel', 'Joachim', 'Kloubert')
-          .aggregate(function(result, x) {
+          .aggregate((result: string, x: string) => {
                          return result += " " + x;
                      });
 
@@ -311,7 +312,7 @@ var pets: Pet[] = [
     new Pet("Schnuffel", persons[2]),
     new Pet("WauWau", persons[0]),
     new Pet("Lulu", persons[3]),
-    new Pet("Asta", persons[1])
+    new Pet("Asta", persons[1]),
 ];
 
 // groupJoin()
@@ -380,18 +381,18 @@ Enumerable.create("grape", "passionfruit", "banana",
 // select()
 // "MARCEL", "KLOUBERT"
 Enumerable.create("Marcel", "Kloubert")
-          .select('x => x.toUpperCase()');
+          .select((x: string) => x.toUpperCase());
           
 // selectMany()
 // 1, 10, 100, 2, 20, 200, 3, 30, 300
 Enumerable.create(1, 2, 3)
-          .selectMany('x => [x, x * 10, x * 100]');
+          .selectMany((x: number) => [x, x * 10, x * 100]);
 
 // zip()
 // "Marcel Kloubert", "Bill Gates", "Albert Einstein"
 Enumerable.create('Marcel', 'Bill', 'Albert')
           .zip(['Kloubert', 'Gates', 'Einstein', 'Adenauer'],
-               function(firstName, lastName) {
+               (firstName: string, lastName: string) => {
                    return firstName + " " + lastName;
                });
 ```
@@ -402,7 +403,7 @@ Enumerable.create('Marcel', 'Bill', 'Albert')
 // all()
 // (false)
 Enumerable.create(1, 2, '3', 4)
-          .all('x => typeof x !== "string"');
+          .all((x) => typeof x !== "string");
           
 // contains()
 // (true)
@@ -412,7 +413,7 @@ Enumerable.create(1, 2, '3')
 // any()
 // (true)
 Enumerable.create(1, 2, '3', 4)
-          .any('x => typeof x === "string"');
+          .any((x) => typeof x === "string");
  
 // sequenceEqual()
 // (false)         
@@ -429,11 +430,11 @@ var jsArray = Enumerable.create(1, 2, 3, 4)
   
 // toObject()
 var obj = Enumerable.create(1, 2, 3, 4)
-                    .toObject('(item, index) => "item" + index');  
+                    .toObject((item, index) => "item" + index);  
   
 // toObservable()
 var o = Enumerable.create(1, 2, 3, 4)
-                  .toObservable('(item, index) => "item" + index');
+                  .toObservable((item, index) => "item" + index);
   
 // toObservableArray()
 var oa = Enumerable.create(1, 2, 3, 4)
@@ -447,7 +448,7 @@ var oa = Enumerable.create(1, 2, 3, 4)
 // lookup['K'][0] = 'Konrad'
 // lookup['M'][0] = 'Marcel'
 var lookup = Enumerable.create('Bill', 'Marcel', 'Barney', 'Albert', 'Konrad')
-                       .toLookup('x => x[0]');
+                       .toLookup((x: string) => x[0]);
 ```
 
 ### Count
@@ -459,7 +460,7 @@ Enumerable.create(0, 1, 2)
           
 // 2
 Enumerable.create(0, 1, 2)
-          .count('x => x > 0');
+          .count((x) => x > 0);
 ```
 
 ### More
@@ -498,12 +499,12 @@ while (seq.moveNext()) {
 ```typescript
 var seq = Enumerable.create(0, 1, 2);
 
-seq.each(function(x) {
+seq.each((x: number) => {
              console.log(x);
          });
 
 seq.reset()
-   .each(function(x) {
+   .each((x: number) => {
              console.log(x * 2);
          });
 ```
