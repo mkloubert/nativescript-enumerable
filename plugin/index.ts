@@ -22,657 +22,684 @@
 
 import {Observable} from "data/observable";
 import {ObservableArray} from "data/observable-array";
-
-var orderedEnumerableMethods : any = {};
-
-/**
- * Returns a value as function.
- *
- * @function asFunc
- * 
- * @param any v The value to convert. Can be a function or a string that is handled as lambda expression.
- * @param {Boolean} [throwException] Throw an exception if value is no valid function or not. Is (true) by default.
- * 
- * @throws Value is no valid function / lambda expression.
- * 
- * @return {Function} Value as function or (false) if value is invalid.
- */
-export function asFunc(v: any, throwException?: boolean) {
-    if (typeof v === "function") {
-        return v;
-    }
-    
-    if (!v) {
-        return v;
-    }
-    
-    // now handle as lambda
-    
-    if (arguments.length < 2) {
-        throwException = true;
-    }
-
-    var lambda = "" + v;
-    
-    var matches = lambda.match(/^(\s*)([\(]?)([^\)]*)([\)]?)(\s*)(=>)/m);
-    if (matches) {
-        if ((("" === matches[2]) && ("" !== matches[4])) ||
-            (("" !== matches[2]) && ("" === matches[4]))) {
-            
-            if (throwException) {
-                throw "Syntax error in '" + lambda + "' expression!";
-            }
-            
-            return null;
-        }
-        
-        var lambdaBody = lambda.substr(matches[0].length)
-                               .replace(/^[\s|{|}]+|[\s|{|}]+$/g, '');  // trim
-        
-        if ("" !== lambdaBody) {
-            if (';' !== lambdaBody.substr(-1)) {
-                lambdaBody = 'return ' + lambdaBody + ';';
-            }
-        }
-        
-        var func;
-        eval('func = function(' + matches[3] + ') { ' + lambdaBody + ' };');
-        
-        return func;
-    }
-    
-    if (throwException) {
-        throw "'" + v + "' is NO valid lambda expression!";
-    }
-    
-    return false;
-}
-
-interface IOrDefaultMethodContext {
-    predicate: (item: any, index: number, ctx: IEnumerableContext) => boolean;
-    defaultValue?: any;
-}
-
-function createObjectForOrDefaultMethod(args) : IOrDefaultMethodContext {
-    var odObj = {
-        predicate: function() { return true; },
-        defaultValue: undefined
-    };
-    
-    if (args.length > 0) {
-        if (args.length < 2) {
-            var func = asFunc(args[0], false);
-            
-            if (typeof func !== "function") {
-                odObj.defaultValue = args[0];
-            }
-            else {
-                odObj.predicate = func;
-            }
-        }
-        else {
-            odObj.predicate = asFunc(args[0]);
-            odObj.defaultValue = args[1];
-        }
-    }
-    
-    return odObj;
-}
+import TypeUtils = require("utils/types");
+import {VirtualArray} from "data/virtual-array";
 
 /**
- * Returns a value as comparer.
- *
- * @function toComparerSafe
- * 
- * @param any predicate The input value.
- * 
- * @throws Input value is no valid function / lambda expression.
- * 
- * @return {Function} Input value as comparer.
+ * Regular expression for trimming a string
+ * at the beginning and the end.
  */
-export function toComparerSafe(comparer) {
-    comparer = asFunc(comparer);
-    
-    var defaultComprer = function(x, y) {
-        if (x < y) {
-            return -1;
-        }
-        
-        if (x > y) {
-            return 1;
-        }
-        
-        return 0;
-    };
-    
-    if (!comparer) {
-        return defaultComprer;
-    }
-    
-    return comparer;
-}
+export const REGEX_TRIM: RegExp = /^\s+|\s+$/gm;
 
 /**
- * Returns a value as equality comparer.
- *
- * @function toEqualityComparerSafe
- * 
- * @param any equalityComparer The input value.
- * 
- * @throws Input value is no valid function / lambda expression.
- * 
- * @return {Function} Input value as equality comparer.
+ * Describes a grouping.
  */
-export function toEqualityComparerSafe(equalityComparer) {
-    if (true === equalityComparer) {
-        return function(x, y) {
-            return x === y;    
-        };
-    }
-    
-    equalityComparer = asFunc(equalityComparer);
-    
-    var defaultEqualityComparer = function(x, y) {
-        return x == y;
-    };
-    
-    if (!equalityComparer) {
-        return defaultEqualityComparer;
-    }
-    
-    return equalityComparer;
-}
-
-/**
- * Returns a value as predicate.
- *
- * @function toPredicateSafe
- * 
- * @param any predicate The input value.
- * 
- * @throws Input value is no valid function / lambda expression.
- * 
- * @return {Function} Input value as predicate.
- */
-export function toPredicateSafe(predicate) {
-    if (!predicate) {
-        predicate = function() { return true; };
-    }
-    
-    return asFunc(predicate);
-}
-
-export interface IEnumerableContext {
-    index: number;
-    item: any;
-    key: any;
-    sequence: IEnumerable;
-}
-
-function createEnumerableContext(enumerable, index) {
-    return {
-        index: index,
-        item: enumerable.current,
-        key: enumerable.itemKey,
-        sequence: enumerable
-    };
-}
-
-function setupEnumerable(enumerable, opts) {
-    enumerable.currentFunc = function() {
-        var c = opts.current();
-        
-        if (enumerable.__6C0F8FF9E35) {
-            // use inner selector
-            return enumerable.__6C0F8FF9E35(c);
-        }
-        
-        return c;
-    };
-    
-    enumerable.isValidFunc = opts.isValid;
-
-    Object.defineProperty(enumerable, 'itemKey', {
-        get: opts.key
-    });
-    
-    enumerable.moveNextFunc = opts.moveNext;
-    enumerable.reset = function() {
-        opts.reset();
-        return enumerable;
-    };
-}
-
-function setupOrderedEnumerable(orderedEnumerable, opts) {
-    for (var p in orderedEnumerableMethods) {
-        if (orderedEnumerableMethods.hasOwnProperty(p)) {
-            orderedEnumerable[p] = orderedEnumerableMethods[p];    
-        }
-    }
-    
-    orderedEnumerable.__0CDF3D959A20 = opts.selector;
-    orderedEnumerable.__559048F1 = opts.comparer;
-    orderedEnumerable.__A922635A1BF2 = opts.originalItems;
-}
-
-/**
- * Creates a new sequence from an array.
- *
- * @function fromArray
- * 
- * @param {Array} arr The array.
- * 
- * @return {Sequence} The new sequence.
- */
-function fromArray(arr) : IEnumerable {
-    if (arguments.length < 1) {
-        arr = [];
-    }
-    
-    var enumerable : any = new Sequence();
-    
-    var index;
-    var opts = {
-        current: undefined,
-        key: function() { return index; },
-
-        isValid: function() {
-            if (arr.length < 1) {
-                return false;
-            }
-            
-            var i = index;
-            if (i === undefined) {
-                i = 0;
-            }
-            
-            return arr.length - i > 0;
-        },
-           
-        moveNext: function() {
-            if (index === undefined) {
-                index = -1;
-            }
-            
-            return ++index < arr.length;
-        },
-        
-        reset: function() { index = undefined; }
-    };
-    
-    if (arr instanceof ObservableArray) {
-        opts.current = function() { return arr.getItem(index); };
-    }
-    else {
-        opts.current = function() { return arr[index]; };
-    }
-    
-    setupEnumerable(enumerable, opts);
-    
-    return enumerable;
-}
-exports.fromArray = fromArray;
-
-/**
- * Creates a new sequence from an object.
- *
- * @function fromObject
- * 
- * @param {Object} obj The object.
- * 
- * @return {Sequence} The new sequence.
- */
-function fromObject(obj) {
-    if (arguments.length < 1) {
-        obj = {};
-    }
-    
-    var enumerable = new Sequence();
-    
-    var properties = [];
-    for (var p in obj) {
-        properties.push(p);
-    }
-    
-    var index;
-    setupEnumerable(enumerable, {
-        current: function() {
-            return obj[properties[index]];
-        },
-        
-        isValid: function() {
-            if (properties.length < 1) {
-                return false;
-            }
-            
-            var i = index;
-            if (i === undefined) {
-                i = 0;
-            }
-            
-            return properties.length - i > 0;
-        },
-        
-        key: function() { return properties[index]; },
-        
-        moveNext: function() {
-            if (index === undefined) {
-                index = -1;
-            }
-            
-            return ++index < properties.length;
-        },
-        
-        reset: function() { index = undefined; }
-    });
-    
-    return enumerable;
-}
-exports.fromObject = fromObject;
-
-/**
- * Creates a new sequence from a list of items.
- *
- * @function create
- * 
- * @param {Array} arr The array.
- * 
- * @return {Sequence} The new sequence.
- */
-function create() {
-    return fromArray(arguments);
-}
-exports.create = create;
-
-/**
- * Creates a sequence with a range of items.
- *
- * @function repeat
- * 
- * @param any start The start value.
- * @param {Number} cnt The number of items to return.
- * @param any [incrementor] The custom function (or value) that increments the current value.
- * 
- * @return {Object} The new sequence.
- */
-function range(start, cnt, incrementor) {
-    incrementor = asFunc(incrementor, false);
-    if (false === incrementor) {
-        var incrementBy = incrementor;
-        
-        incrementor = function(x) {
-            return x + incrementBy;
-        };
-    }
-    else if (!incrementor) {
-        incrementor = function(x) {
-            return x + 1;
-        };
-    }
-    
-    var numbers = [];
-    
-    var remainingCnt = cnt;
-    var val = start;
-    while (remainingCnt > 0) {
-        numbers.push(val);
-        
-        val = incrementor(val, {
-            remainingCount: remainingCnt,
-            startValue: start,
-            totalCount: cnt
-        });
-        
-        --remainingCnt;
-    }
-    
-    return fromArray(numbers);
-}
-exports.range = range;
-
-/**
- * Creates a sequence with a number of specific values.
- *
- * @function repeat
- * 
- * @param any v The value.
- * @param {Number} cnt The number of items to return.
- * 
- * @return {Object} The new sequence.
- */
-function repeat(v, cnt) {
-    var items = [];
-
-    while (cnt > 0) {
-        items.push(v);
-        --cnt;
-    }
-    
-    return fromArray(items);
-}
-exports.repeat = repeat;
-
-/**
- * Checks if a value is a sequence.
- *
- * @function isEnumerable
- * 
- * @param any v The value to check.
- * 
- * @return {Boolean} Is sequence or not.
- */
-export function isEnumerable(v) {
-    return v instanceof Sequence;
-}
-
-/**
- * Returns a value as sequence.
- *
- * @function asEnumerable
- * 
- * @param any v The input value.
- * @param {Boolean} [throwException] Throws an exception if input value is no valid value. Is (true) by default.
- * 
- * @return any The value as sequence or (false) if input value is no valid object.
- */
-export function asEnumerable(v: any, throwException?: boolean) {
-    if ((v instanceof Array) || 
-        (v instanceof ObservableArray) ||
-        !v) {
-        
-        return fromArray(v);
-    }
-    
-    if (isEnumerable(v)) {
-        return v;
-    }
-    
-    if (typeof v === 'string') {
-        var charArray = [];
-        for (var i = 0; i < v.length; i++) {
-            charArray.push(v[i]);
-        }
-        
-        return fromArray(charArray);
-    }
-    
-    if (typeof v === 'object') {
-        return fromObject(v);
-    }
-    
-    // at this point we have no valid value to use as sequence
-    
-    if (arguments.length < 2) {
-        throwException = true;
-    }
-    
-    if (throwException) {
-        throw "'" + v + "' is no valid value to use as sequence!";    
-    }
-    
-    return false;
-}
-
-/**
- * Short hand version for 'each' method of a sequence.
- *
- * @function each
- * 
- * @param any items The sequence of items to iterate.
- * @param any action The action to invoke for each item.
- * 
- * @throws At least one argument is invalid.
- * 
- * @return any The result of the last invocation.
- */
-export function each(items, action) {
-    return asEnumerable(items).each(action);
-}
-
-/**
- * Short hand version for 'order(By)' methods of a sequence.
- *
- * @function sort
- * 
- * @param items any The sequence of items to iterate.
- * @param [comparer] any The custom comparer to use.
- * @param [selector] any The custom key selector to use.
- * 
- * @throws At least one argument is invalid.
- * 
- * @return {Sequence} The sequences with the sorted items.
- */
-export function sort(items, comparer, selector) {
-    var seq = asEnumerable(items);
-    
-    if (arguments.length < 3) {
-        return seq.order(comparer);
-    }
-    
-    return seq.orderBy(selector, comparer);
-}
-
-/**
- * Short hand version for 'order(By)Descending' methods of a sequence.
- *
- * @function sortDesc
- * 
- * @param items any The sequence of items to iterate.
- * @param [comparer] any The custom comparer to use.
- * @param [selector] any The custom key selector to use.
- * 
- * @throws At least one argument is invalid.
- * 
- * @return {Sequence} The sequences with the sorted items.
- */
-export function sortDesc(items, comparer, selector) {
-    var seq = asEnumerable(items);
-    
-    if (arguments.length < 3) {
-        return seq.orderDescending(comparer);
-    }
-    
-    return seq.orderByDescending(selector, comparer);
-}
-
-// ---------- enumerable method templates (Sequence) ----------
-
-export interface IEnumerable {
-    current: any;
-    distinct(equalityComparer: any) : IEnumerable;
-    each(action: any) : any;
-    isValid: boolean;
-    moveNext(): boolean;
-    orderBy(selector: any, comparer?: any) : IOrderedEnumerable;
-}
-
-export interface IOrderedEnumerable extends IEnumerable {
-}
-
-class Sequence implements IEnumerable {
-    protected __6C0F8FF9E35: (item: any) => any;
-
-    public currentFunc: () => any;
-    public get current() : any {
-        return this.currentFunc();
-    }
-    
-    public isValidFunc: () => boolean;
-    public get isValid() : boolean {
-        return this.isValidFunc();
-    }
-    
-    public moveNextFunc: () => boolean;
-    public moveNext() : boolean {
-        return this.moveNextFunc();
-    }
-    
-
+export interface IGrouping<K, T> extends IEnumerable<T> {
     /**
-     * Checks if all elements of the sequence match a condition.
-     *
-     * @method all
-     * 
-     * @param {Function} predicate The condition.
-     * 
-     * @return {Boolean} All items match condition or not. If sequence is empty (true) is returned.
+     * Gets the key.
      */
-    public all(predicate) {
-        predicate = asFunc(predicate);
-        
-        while (this.moveNext()) {
-            if (!predicate(this.current)) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
+    key: K;
+}
 
-    /**
-     * Checks if at least one element of the sequence matches a condition.
-     *
-     * @method any
-     * 
-     * @param {Function} [predicate] The condition.
-     * 
-     * @return {Boolean} At least one element was found that matches the condition.
-     *                   If condition is not defined, the method checks if sequence contains at least one element.
-     */
-    public any(predicate) {
-        predicate = toPredicateSafe(predicate);
-        
-        while (this.moveNext()) {
-            if (predicate(this.current)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
+/**
+ * Describes a sequence.
+ */
+export interface IEnumerable<T> {
     /**
      * Applies an accumulator function over the sequence.
-     *
-     * @method aggregate
      * 
      * @param {Function} accumulator The accumulator.
      * @param any [defaultValue] The value to return if sequence is empty.
      * 
      * @return any The final accumulator value or the default value.
      */
-    public aggregate(accumulator, defaultValue) {
-        accumulator = asFunc(accumulator);
+    aggregate(accumulator: any, defaultValue?: any): any;
+
+    /**
+     * Checks if all elements of the sequence match a condition.
+     * 
+     * @param {Function} predicate The condition.
+     * 
+     * @return {Boolean} All items match condition or not. If sequence is empty (true) is returned.
+     */
+    all(predicate: any): boolean;
+
+    /**
+     * Checks if at least one element of the sequence matches a condition.
+     * 
+     * @param {Function} [predicate] The condition.
+     * 
+     * @return {Boolean} At least one element was found that matches the condition.
+     *                   If condition is not defined, the method checks if sequence contains at least one element.
+     */
+    any(predicate: any): boolean;
+
+    /**
+     * Computes the average of that sequence.
+     *
+     * @param any [defaultValue] The (default) value to return if sequence is empty.
+     * 
+     * @return any The average of the sequence or the default value.
+     */
+    average(defaultValue?: any): any;
+
+    /**
+     * Casts all items to a specific type.
+     * 
+     * @param {String} type The target type.
+     * 
+     * @return any The new sequence with the casted items.
+     */
+    cast(type: string): IEnumerable<any>;
+
+    /**
+     * Concats the items of that sequence with the items of another one.
+     * 
+     * @param any second The other sequence.
+     * 
+     * @throws Value for other sequence is invalid.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    concat(second: any): IEnumerable<T>;
+
+    /**
+     * Checks if that sequence contains an item.
+     * 
+     * @param any item The item to search for.
+     * @param {Function} [equalityComparer] The custom equality comparer to use.
+     * 
+     * @return {Boolean} Contains item or not.
+     */
+    contains(item: T, equalityComparer?: any): boolean;
+
+    /**
+     * Returns the number of elements.
+     * 
+     * @param {Function} [predicate] The custom condition to use.
+     * 
+     * @return {Number} The number of (matching) elements.
+     */
+    count(predicate?: any): number;
+
+    /**
+     * Gets the current element.
+     */
+    current: T;
+
+    /**
+     * Returns a default sequence if that sequence is empty.
+     * 
+     * @param ...any [defaultItem] One or more items for the default sequence.
+     * 
+     * @return {IEnumerable} A default sequence or that sequence if it is not empty.
+     */
+    defaultIfEmpty(...defaultItems: T[]): IEnumerable<T>;
+
+    /**
+     * Removes the duplicates from that sequence.
+     * 
+     * @param {Function} [equalityComparer] The custom equality comparer to use.
+     * 
+     * @throws No valid equality comparer.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    distinct(equalityComparer?: any): IEnumerable<T>;
+
+    /**
+     * Iterates over the elements of that sequence.
+     * 
+     * @param {Function} action The callback that is executed for an item.
+     * 
+     * @return any The result of the last execution.
+     */
+    each(action: any): any;
+
+    /**
+     * Return an element of the sequence at a specific index.
+     * 
+     * @param {Number} index The zero based index.  
+     * 
+     * @throws Element was not found.
+     * 
+     * @return any The element.
+     */
+    elementAt(index: number): T;
+
+    /**
+     * Tries to return an element of the sequence at a specific index.
+     * 
+     * @param {Number} index The zero based index.  
+     * @param any [defaultValue] The (default) value to return if no matching element was found.
+     * 
+     * @return any The element or the default value.
+     */
+    elementAtOrDefault(index: number, defaultValue?: any): any;
+
+    /**
+     * Returns the items of that sequence except a list of specific ones.
+     * 
+     * @param any second The sequence with the items to remove.
+     * @param any [equalityComparer] The custom equality comparer to use.
+     *
+     * @throws The second sequence and/or the equality comparer is invalid.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    except(second: any, equalityComparer?: any): IEnumerable<T>;
+
+    /**
+     * Returns the first element of the sequence.
+     * 
+     * @param {Function} [predicate] The custom condition to use.
+     *
+     * @throws Sequence contains no (matching) element.
+     * 
+     * @return any The first (matching) element.
+     */
+    first(predciate?: any): T;
+
+    /**
+     * Tries to return the first element of the sequence.
+     * 
+     * @param {Function} [predicateOrDefaultValue] The custom condition to use.
+     *                                             If only one argument is defined and that value is NO function it will be handled as default value.  
+     * @param any [defaultValue] The (default) value to return if no matching element was found.
+     * 
+     * @return any The first (matching) element or the default value.
+     */
+    firstOrDefault(predicateOrDefaultValue?: any, defaultValue?: any): any;
+
+    /**
+     * Groups the elements of the sequence.
+     * 
+     * @param any keySelector The group key selector.
+     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
+     * 
+     * @throw At least one argument is invalid.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    groupBy<K>(keySelector, keyEqualityComparer): IEnumerable<IGrouping<K, T>>;
+
+    /**
+     * Correlates the elements of that sequence and another based on matching keys and groups them.
+     * 
+     * @param any inner The other sequence.
+     * @param any outerKeySelector The key selector for the items of that sequence.
+     * @param any innerKeySelector The key selector for the items of the other sequence.
+     * @param any resultSelector The function that provides the result value for two matching elements.
+     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
+     * 
+     * @throw At least one argument is invalid.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    groupJoin<U>(inner: any,
+                 outerKeySelector: any, innerKeySelector: any,
+                 resultSelector: any,
+                 keyEqualityComparer?: any): IEnumerable<U>;
+
+    /**
+     * Returns the intersection between this and a second sequence.
+     * 
+     * @param any second The second sequence.
+     * @param any [equalityComparer] The custom equality comparer to use.
+     *
+     * @throws The second sequence and/or the equality comparer is invalid.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    intersect(second: any, equalityComparer?: any): IEnumerable<T>;
+
+    /**
+     * Gets the item key.
+     */
+    itemKey: any;
+
+    /**
+     * Gets if the current state of that sequence is valid or not.
+     */
+    isValid: boolean;
+
+    /**
+     * Correlates the elements of that sequence and another based on matching keys.
+     * 
+     * @param any inner The other sequence.
+     * @param any outerKeySelector The key selector for the items of that sequence.
+     * @param any innerKeySelector The key selector for the items of the other sequence.
+     * @param any resultSelector The function that provides the result value for two matching elements.
+     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
+     * 
+     * @throw At least one argument is invalid.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    join<U>(inner: any,
+            outerKeySelector: any, innerKeySelector: any,
+            resultSelector: any,
+            keyEqualityComparer?: any);
+
+    /**
+     * Returns the last element of the sequence.
+     * 
+     * @param {Function} [predicate] The custom condition to use.
+     *
+     * @throws Sequence contains no (matching) element.
+     * 
+     * @return any The last (matching) element.
+     */
+    last(predicate?: any): any;
+
+    /**
+     * Tries to return the last element of the sequence.
+     * 
+     * @param {Function} [predicateOrDefaultValue] The custom condition to use.
+     *                                             If only one argument is defined and that value is NO function it will be handled as default value.  
+     * @param any [defaultValue] The (default) value to return if no matching element was found.
+     * 
+     * @return any The last (matching) element or the default value.
+     */
+    lastOrDefault(predicateOrDefaultValue?: any, defaultValue?: any): any;
+
+    /**
+     * Tries to return the maximum value of the sequence.
+     * 
+     * @param any [defaultValue] The (default) value to return if sequence is empty.
+     * 
+     * @return any The maximum or the default value.
+     */
+    max(defaultValue?: any): any;
+
+    /**
+     * Tries to return the minimum value of the sequence.
+     * 
+     * @param any [defaultValue] The (default) value to return if sequence is empty.
+     * 
+     * @return any The minimum or the default value.
+     */
+    min(defaultValue?: any): any;
+
+    /**
+     * Tries to move to the next item.
+     * 
+     * @return {Boolean} Operation was successful or not.
+     */
+    moveNext(): boolean;
+
+    /**
+     * Returns elements of a specific type.
+     * 
+     * @param {String} type The type.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    ofType(type: string): IEnumerable<any>;
+
+    /**
+     * Sorts the elements of that sequence in ascending order by using the values itself as keys.
+     * 
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws The comparer is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    order(comparer?: any): IOrderedEnumerable<T>;
+
+    /**
+     * Sorts the elements of that sequence in ascending order.
+     * 
+     * @param any selector The key selector.
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws At least one argument is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    orderBy(selector: any, comparer?: any): IOrderedEnumerable<T>;
+
+    /**
+     * Sorts the elements of that sequence in descending order.
+     * 
+     * @param any selector The key selector.
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws At least one argument is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    orderByDescending(selector: any, comparer?: any): IOrderedEnumerable<T>;
+
+    /**
+     * Sorts the elements of that sequence in descending order by using the values as keys.
+     * 
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws The comparer is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    orderDescending(comparer?: any): IOrderedEnumerable<T>;
+
+    /**
+     * Resets the sequence.
+     * 
+     * @throws Reset is not possible.
+     */
+    reset();
+    
+    /**
+     * Reverses the order of the elements.
+     *
+     * @method reverse
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    reverse(): IEnumerable<T>;
+
+    /**
+     * Projects the elements of that sequence to new values.
+     * 
+     * @param {Function} selector The selector.
+     *
+     * @throws Selector is no valid value for use as function.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    select<U>(selector: any): IEnumerable<U>;
+
+    /**
+     * Projects the elements of that sequence to new sequences that converted to one flatten sequence.
+     * 
+     * @param {Function} selector The selector.
+     * 
+     * @throws Selector is no valid value for use as function.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    selectMany<U>(selector: any): IEnumerable<U>;
+
+    /**
+     * Checks if that sequence has the same elements as another one.
+     * 
+     * @param any other The other sequence.
+     * @param any [equalityComparer] The custom equality comparer to use.
+     * 
+     * @throws Other sequence and/or equality comparer are invalid values.
+     * 
+     * @return {IEnumerable} Both sequences are the same or not
+     */
+    sequenceEqual(other: any, equalityComparer?: any): boolean;
+
+    /**
+     * Returns the one and only element of the sequence.
+     * 
+     * @param {Function} [predicate] The custom condition to use.
+     * 
+     * @throws Sequence contains more than one matching element or no element.
+     * 
+     * @return T The only (matching) element or the default value.
+     */
+    single(predicate?: any): T;
+
+    /**
+     * Tries to return the one and only element of the sequence.
+     * 
+     * @param {Function} [predicateOrDefaultValue] The custom condition to use.
+     *                                             If only one argument is defined and that value is NO function it will be handled as default value.  
+     * @param any [defaultValue] The (default) value to return if no matching element was found.
+     * 
+     * @throws Sequence contains more than one matching element.
+     * 
+     * @return any The only (matching) element or the default value.
+     */
+    singleOrDefault(predicateOrDefaultValue?: any, defaultValue?: any): any;
+
+    /**
+     * Skips a number of elements.
+     * 
+     * @param {Number} cnt The number of elements to skip.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    skip(cnt: number): IEnumerable<T>;
+
+    /**
+     * Skips elements of that sequence while a condition matches.
+     *
+     * @method skipWhile
+     * 
+     * @param {Function} predicate The condition to use.
+     * 
+     * @throws Predicate is no valid value.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    skipWhile(predicate: any): IEnumerable<T>;
+
+    /**
+     * Calculates the sum of the elements.
+     * 
+     * @param any defaultValue The value to return if sequence is empty.
+     * 
+     * @return any The sum or the default value.
+     */
+    sum(defaultValue?: any): any;
+
+    /**
+     * Takes a number of elements.
+     * 
+     * @param {Number} cnt The number of elements to take.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    take(cnt: number): IEnumerable<T>;
+    
+    /**
+     * Takes elements while a condition matches.
+     * 
+     * @param {Function} predicate The condition to use.
+     * 
+     * @throws Predicate is no valid value.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    takeWhile(predicate): IEnumerable<T>;
+
+    /**
+     * Returns the elements of that sequence as array.
+     * 
+     * @return {Array} The sequence as new array.
+     */
+    toArray(): T[];
+
+    /**
+     * Creates a lookup object from the sequence.
+     * 
+     * @param any keySelector The group key selector.
+     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
+     * 
+     * @throw At least one argument is invalid.
+     * 
+     * @return {Object} The lookup array.
+     */
+    toLookup(keySelector: any, keyEqualityComparer?: any): any;
+
+    /**
+     * Creates a new object from the items of that sequence.
+     * 
+     * @param any [keySelector] The custom key selector to use.
+     * 
+     * @throws Key selector is invalid.
+     * 
+     * @return {Object} The new object.
+     */
+    toObject(keySelector?: any): any;
+
+    /**
+     * Creates a new observable object from the items of that sequence.
+     * 
+     * @param any [keySelector] The custom key selector to use.
+     * 
+     * @throws Key selector is invalid.
+     * 
+     * @return {Observable} The new object.
+     */
+    toObservable(keySelector?: any): Observable;
+
+    /**
+     * Creates a new observable array from the items of that sequence.
+     * 
+     * @return {ObservableArray} The new array.
+     */
+    toObservableArray(): ObservableArray<T>;
+
+    /**
+     * Creates a new virtual array from the items of that sequence.
+     * 
+     * @return {ObservableArray} The new array.
+     */
+    toVirtualArray(): VirtualArray<T>;
+
+    /**
+     * Produces the set union of that sequence and another.
+     * 
+     * @param any second The second sequence.
+     * @param {Function} [equalityComparer] The custom equality comparer to use.
+     * 
+     * @throws Sequence or equality comparer are no valid values.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    union(second: any, equalityComparer?: any): IEnumerable<T>;
+    
+    /**
+     * Filters the elements of that sequence.
+     * 
+     * @param {Function} predicate The predicate to use.
+     * 
+     * @throws Predicate is no valid function / lambda expression.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    where(predicate: any): IEnumerable<T>;
+
+    /**
+     * Applies a specified function to the corresponding elements of that sequence
+     * and another, producing a sequence of the results.
+     * 
+     * @param any second The second sequence.
+     * @param {Function} selector The selector for the combined result items of the elements of the two sequences.
+     * 
+     * @throws Sequence or selector are no valid values.
+     * 
+     * @return {IEnumerable} The new sequence.
+     */
+    zip<U>(second, selector): IEnumerable<U>;
+}
+
+/**
+ * Describes the context of a current sequence item.
+ */
+export interface IEnumerableItemContext<T> {
+    /**
+     * Gets the zero based index.
+     */
+    index?: number;
+
+    /**
+     * Gets the underlying item.
+     */
+    item: T;
+
+    /**
+     * Gets the underlying key.
+     */
+    key: any;
+
+    /**
+     * Gets the underlying sequence.
+     */
+    sequence: IEnumerable<T>;
+}
+
+/**
+ * Describes an ordered sequence.
+ */
+export interface IOrderedEnumerable<T> extends IEnumerable<T> {
+    /**
+     * Performs a subsequent ordering of the elements in that sequence in ascending order,
+     * using the values itself as keys.
+     * 
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws The comparer is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    then(comparer?: any): IOrderedEnumerable<T>;
+
+    /**
+     * Performs a subsequent ordering of the elements in that sequence in ascending order, according to a key.
+     * 
+     * @param any selector The key selector.
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws At least one argument is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    thenBy(selector: any, comparer?: any): IOrderedEnumerable<T>;
+
+    /**
+     * Performs a subsequent ordering of the elements in that sequence in descending order, according to a key.
+     * 
+     * @param any selector The key selector.
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws At least one argument is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    thenByDescending(selector: any, comparer?: any): IOrderedEnumerable<T>;
+
+    /**
+     * Performs a subsequent ordering of the elements in that sequence in descending order,
+     * using the values as keys.
+     * 
+     * @param any [comparer] The custom key comparer to use.
+     * 
+     * @throws The comparer is invalid.
+     * 
+     * @return {IOrderedEnumerable} The new sequence.
+     */
+    thenDescending(comparer?: any): IOrderedEnumerable<T>;
+}
+
+/**
+ * A basic sequence.
+ */
+export abstract class Sequence<T> implements IEnumerable<T> {
+    /**
+     * The custom selector.
+     */
+    protected _selector: (x: T) => any;
+
+    /** @inheritdoc */
+    public aggregate(accumulator: any, defaultValue?) {
+        var acc: (result: any, x: T, index: number, ctx: IEnumerableItemContext<T>) => any = asFunc(accumulator);
         
         var index = -1;
         var aggResult = defaultValue;
         var isFirst = true;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext<T>(this, ++index);
             
             if (!isFirst) {
-                aggResult = accumulator(aggResult,
-                                        ctx.item, ctx.index, ctx);
+                aggResult = acc(aggResult,
+                                ctx.item, ctx.index, ctx);
             }
             else {
                 aggResult = ctx.item;
@@ -683,43 +710,59 @@ class Sequence implements IEnumerable {
         return aggResult;
     }
 
-    /**
-     * Computes the average of that sequence.
-     *
-     * @method average
-     * 
-     * @param any [defaultValue] The (default) value to return if sequence is empty.
-     * 
-     * @return any The average of the sequence or the default value.
-     */
-    public average(defaultValue) {
+    /** @inheritdoc */
+    public all(predicate: any): boolean {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
+        
+        var index = -1;
+        while (this.moveNext()) {
+            var ctx = new EnumerableItemContext<T>(this, ++index);
+
+            if (!p(ctx.item, ctx.index, ctx)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /** @inheritdoc */
+    public any(predicate: any): boolean {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
+        
+        var index = -1;
+        while (this.moveNext()) {
+            var ctx = new EnumerableItemContext<T>(this, ++index);
+
+            if (p(ctx.item, ctx.index, ctx)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /** @inheritdoc */
+    public average(defaultValue?: any): any {
         var cnt = 0;
         var sum = 0;
         while (this.moveNext()) {
-            sum += parseFloat(this.current);        
+            sum += parseFloat("" + this.current);
             ++cnt;
         }
-        
-        return cnt > 0 ? sum / cnt
+    
+        return cnt > 0 ? (sum / cnt)
                        : defaultValue;
     }
 
-    /**
-     * Casts all items to a specific type.
-     *
-     * @method cast
-     * 
-     * @param {String} type The target type.
-     * 
-     * @return any The new sequence with the casted items.
-     */
-    public cast(type) {
+    /** @inheritdoc */
+    public cast(type: string): IEnumerable<any> {
         if (type !== null) {
-            if (type === undefined) {
+            if (TypeUtils.isUndefined(type)) {
                 type = "";
             }
             else {
-                type = ("" + type).replace(/^\s+|\s+$/gm, '');
+                type = type.replace(REGEX_TRIM, '');
             }
         }
         
@@ -803,21 +846,11 @@ class Sequence implements IEnumerable {
         });
     }
 
-    /**
-     * Concats the items of that sequence with the items of another one.
-     *
-     * @method concat
-     * 
-     * @param any second The other sequence.
-     * 
-     * @throws Value for other sequence is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public concat(second) {
+    /** @inheritdoc */
+    public concat(second: any): IEnumerable<T> {
         second = asEnumerable(second);
-        
-        var newItems = [];
+            
+        var newItems: T[] = [];
         
         var appendItems = function(seq) {
             while (seq.moveNext()) {
@@ -831,85 +864,56 @@ class Sequence implements IEnumerable {
         return fromArray(newItems);
     }
 
-    /**
-     * Checks if that sequence contains an item.
-     *
-     * @method contains
-     * 
-     * @param any item The item to search for.
-     * @param {Function} [equalityComparer] The custom equality comparer to use.
-     * 
-     * @return {Boolean} Contains item or not.
-     */
-    public contains(item, equalityComparer) {
-        equalityComparer = toEqualityComparerSafe(equalityComparer);
+    /** @inheritdoc */
+    public contains(item: T, equalityComparer?: any): boolean {
+        var ec: (x: T, y: T) => boolean = toEqualityComparerSafe(equalityComparer);
         
-        return this.any(function(x) {
-            return equalityComparer(x, item);
-        });
+        return this.any((x: T) => ec(x, item));
     }
 
-    /**
-     * Returns the number of elements.
-     *
-     * @method count
-     * 
-     * @param {Function} [predicate] The custom condition to use.
-     * 
-     * @return {Number} The number of (matching) elements.
-     */
-    public count(predicate) {
-        predicate = toPredicateSafe(predicate);
+    /** @inheritdoc */
+    public count(predicate?: any): number {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
 
+        var index = -1;
         var cnt = 0;
         while (this.moveNext()) {
-            if (predicate(this.current)) {
-                ++cnt;    
+            var ctx = new EnumerableItemContext(this, ++index);
+
+            if (p(ctx.item, ctx.index, ctx)) {
+                ++cnt;
             }
         }
         
         return cnt;
     }
 
-    /**
-     * Returns a default sequence if that sequence is empty.
-     *
-     * @method defaultIfEmpty
-     * 
-     * @param ...any [defaultItem] One or more items for the default sequence.
-     * 
-     * @return {Object} A default sequence or that sequence if it is not empty.
-     */
-    public defaultIfEmpty() {
+    /** @inheritdoc */
+    public get current(): T {
+        return this.selectInner(this.getCurrent());
+    }
+
+    /** @inheritdoc */
+    public defaultIfEmpty(...defaultItems: T[]): IEnumerable<T> {
         if (!this.isValid) {
             return fromArray(arguments);
         }
-        
+
         return this;
     }
 
-    /**
-     * Removes the duplicates from that sequence.
-     *
-     * @method distinct
-     * 
-     * @param {Function} [equalityComparer] The custom equality comparer to use.
-     * 
-     * @throws No valid equality comparer.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public distinct(equalityComparer: any) : IEnumerable {
-        equalityComparer = toEqualityComparerSafe(equalityComparer);
+    /** @inheritdoc */
+    public distinct(equalityComparer?: any): IEnumerable<T> {
+        var ec: (x: T, y: T) => boolean = toEqualityComparerSafe(equalityComparer);
         
-        var distinctedItems = [];
+        var distinctedItems: T[] = [];
         
         while (this.moveNext()) {
             var curItem = this.current;
             
             var alreadyInList = false;
             for (var i = 0; i < distinctedItems.length; i++) {
-                if (equalityComparer(curItem, distinctedItems[i])) {
+                if (ec(curItem, distinctedItems[i])) {
                     alreadyInList = true;
                     break;
                 }
@@ -923,80 +927,43 @@ class Sequence implements IEnumerable {
         return fromArray(distinctedItems);
     }
 
-
-    /**
-     * Iterates over the elements of that sequence.
-     *
-     * @method each
-     * 
-     * @param {Function} action The callback that is executed for an item.
-     * 
-     * @return any The result of the last execution.
-     */
-    public each(action: any) : any {
+    /** @inheritdoc */
+    public each(action: any): any {
+        var a: (x: T, index: number, ctx: IEnumerableItemContext<T>) => any = asFunc(action);
+    
         var index = -1;
         var result;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
             
-            result = action(ctx.item, ctx.index, ctx);
+            result = a(ctx.item, ctx.index, ctx);
         }
         
         return result;
     }
 
-    /**
-     * Return an element of the sequence at a specific index.
-     *
-     * @method elementAt
-     * 
-     * @param {Number} index The zero based index.  
-     * 
-     * @throws Element was not found.
-     * 
-     * @return any The element.
-     */
-    public elementAt(index) {
-        return this.first(function(x, i) {
+    /** @inheritdoc */
+    public elementAt(index: number): T {
+        return this.first((x: T, i: number) => {
             return i == index;
         });
     }
 
-    /**
-     * Tries to return an element of the sequence at a specific index.
-     *
-     * @method elementAtOrDefault
-     * 
-     * @param {Number} index The zero based index.  
-     * @param any [defaultValue] The (default) value to return if no matching element was found.
-     * 
-     * @return any The element or the default value.
-     */
-    public elementAtOrDefault(index, defaultValue) {
-        return this.firstOrDefault(function(x, i) {
+    /** @inheritdoc */
+    public elementAtOrDefault(index: number, defaultValue?: any): any {
+        return this.firstOrDefault((x: T, i: number) => {
             return i == index;
         }, defaultValue);
     }
 
-    /**
-     * Returns the items of that sequence except a list of specific ones.
-     *
-     * @method except
-     * 
-     * @param any second The sequence with the items to remove.
-     * @param any [equalityComparer] The custom equality comparer to use.
-     *
-     * @throws The second sequence and/or the equality comparer is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public except(second, equalityComparer) {
-        equalityComparer = toEqualityComparerSafe(equalityComparer);
+    /** @inheritdoc */
+    public except(second: any, equalityComparer?: any): IEnumerable<T> {
+        var ec: (x: T, y: T) => boolean = toEqualityComparerSafe(equalityComparer);
         
-        second = asEnumerable(second).distinct(equalityComparer)
+        second = asEnumerable(second).distinct(ec)
                                      .toArray();
             
-        var newItems = [];
+        var newItems: T[] = [];
             
         while (this.moveNext()) {
             var curItem = this.current;
@@ -1004,7 +971,7 @@ class Sequence implements IEnumerable {
             var found = false;
             for (var i = 0; i < second.length; i++) {
                 var secondItem = second[i];
-                if (equalityComparer(curItem, secondItem)) {
+                if (ec(curItem, secondItem)) {
                     found = true;
                     break;
                 }
@@ -1018,25 +985,15 @@ class Sequence implements IEnumerable {
         return fromArray(newItems);
     }
 
-    /**
-     * Returns the first element of the sequence.
-     *
-     * @method first
-     * 
-     * @param {Function} [predicate] The custom condition to use.
-     *
-     * @throws Sequence contains no (matching) element.
-     * 
-     * @return any The first (matching) element.
-     */
-    public first(predicate) {
-        predicate = toPredicateSafe(predicate);
+    /** @inheritdoc */
+    public first(predicate?: any): T {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
         
         var index = -1;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
             
-            if (predicate(ctx.item, ctx.index, ctx)) {
+            if (p(ctx.item, ctx.index, ctx)) {
                 return ctx.item;
             }
         }
@@ -1044,23 +1001,13 @@ class Sequence implements IEnumerable {
         throw "Sequence contains NO element!";
     }
 
-    /**
-     * Tries to return the first element of the sequence.
-     *
-     * @method firstOrDefault
-     * 
-     * @param {Function} [predicateOrDefaultValue] The custom condition to use.
-     *                                             If only one argument is defined and that value is NO function it will be handled as default value.  
-     * @param any [defaultValue] The (default) value to return if no matching element was found.
-     * 
-     * @return any The first (matching) element or the default value.
-     */
-    public firstOrDefault(predicateOrDefaultValue, defaultValue) {
-        var odObj = createObjectForOrDefaultMethod(arguments);
+    /** @inheritdoc */
+    public firstOrDefault(predicateOrDefaultValue?: any, defaultValue?: any): any {
+        var odObj = createObjectForOrDefaultMethod<T>(arguments);
         
         var index = -1;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
             
             if (odObj.predicate(ctx.item, ctx.index, ctx)) {
                 return ctx.item;
@@ -1071,33 +1018,29 @@ class Sequence implements IEnumerable {
     }
 
     /**
-     * Groups the elements of the sequence.
-     *
-     * @method groupBy
+     * Gets the current item.
      * 
-     * @param any keySelector The group key selector.
-     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
-     * 
-     * @throw At least one argument is invalid.
-     * 
-     * @return {Object} The new sequence.
+     * @return any The current item.
      */
-    public groupBy(keySelector, keyEqualityComparer) {
-        keySelector = asFunc(keySelector);
-        keyEqualityComparer = toEqualityComparerSafe(keyEqualityComparer);
+    protected abstract getCurrent(): any;
+
+    /** @inheritdoc */
+    public groupBy<K>(keySelector, keyEqualityComparer): IEnumerable<IGrouping<K, T>> {
+        var ks: (x: T, index: number, ctx: IEnumerableItemContext<T>) => K = asFunc(keySelector);
+        var kc: (x: K, y: K) => boolean = toEqualityComparerSafe(keyEqualityComparer);
         
         var index = -1;
         var groupList = [];
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
             
-            var key = keySelector(ctx.item, ctx.index, ctx);
+            var key = ks(ctx.item, ctx.index, ctx);
             
             var grp = null;
             for (var i = 0; i < groupList.length; i++) {
                 var g = groupList[i];
                 
-                if (keyEqualityComparer(g.key, key)) {
+                if (kc(g.key, key)) {
                     grp = g;
                     break;
                 }
@@ -1115,42 +1058,25 @@ class Sequence implements IEnumerable {
             grp.values.push(ctx.item);
         }
         
-        return fromArray(groupList.map(function(x) {
-            var grouping = <any>fromArray(x.values);
-            grouping.key = x.key;
-            
-            return grouping;
+        return fromArray(groupList.map((x) => {
+            return new Grouping<K, T>(x.key, x.values);
         }));
     }
 
-    /**
-     * Correlates the elements of that sequence and another based on matching keys and groups them.
-     *
-     * @method groupJoin
-     * 
-     * @param any inner The other sequence.
-     * @param any outerKeySelector The key selector for the items of that sequence.
-     * @param any innerKeySelector The key selector for the items of the other sequence.
-     * @param any resultSelector The function that provides the result value for two matching elements.
-     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
-     * 
-     * @throw At least one argument is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public groupJoin(inner,
-                                            outerKeySelector, innerKeySelector,
-                                            resultSelector,
-                                            keyEqualityComparer) {
-                                          
+    /** @inheritdoc */
+    public groupJoin<U>(inner: any,
+                        outerKeySelector: any, innerKeySelector: any,
+                        resultSelector: any,
+                        keyEqualityComparer?: any): IEnumerable<U> {
+
         inner = asEnumerable(inner);
         
-        resultSelector = asFunc(resultSelector);
-        keyEqualityComparer = toEqualityComparerSafe(keyEqualityComparer);
+        var rc: (x: T, inner: IEnumerable<T>) => U = asFunc(resultSelector);
+        var kc: (x: any, y: any) => boolean = toEqualityComparerSafe(keyEqualityComparer);
 
-        var createGroupsForSequence = function(seq, keySelector) {
+        var createGroupsForSequence = (seq, keySelector): { key: any, values: T[] }[] => {
             return seq.groupBy(keySelector)
-                      .select(function(grouping) {
+                      .select((grouping: IGrouping<any, T>) => {
                                   return {
                                       key: grouping.key,
                                       values: grouping.toArray()                                   
@@ -1162,7 +1088,7 @@ class Sequence implements IEnumerable {
         var outerGroups = createGroupsForSequence(this, outerKeySelector);
         var innerGroups = createGroupsForSequence(inner, innerKeySelector);
         
-        var joinedItems = [];
+        var joinedItems: U[] = [];
         
         for (var i = 0; i < outerGroups.length; i++) {
             var outerGrp = outerGroups[i];
@@ -1170,13 +1096,13 @@ class Sequence implements IEnumerable {
             for (var ii = 0; ii < innerGroups.length; ii++) {
                 var innerGrp = innerGroups[ii];
                 
-                if (!keyEqualityComparer(outerGrp.key, innerGrp.key)) {
+                if (!kc(outerGrp.key, innerGrp.key)) {
                     continue;
                 }
                 
                 for (var iii = 0; iii < outerGrp.values.length; iii++) {
-                    joinedItems.push(resultSelector(outerGrp.values[iii],
-                                                    fromArray(innerGrp.values)));
+                    joinedItems.push(rc(outerGrp.values[iii],
+                                        fromArray<T>(innerGrp.values)));
                 }
             }
         }
@@ -1184,32 +1110,21 @@ class Sequence implements IEnumerable {
         return fromArray(joinedItems);
     }
 
-    /**
-     * Returns the intersection between this and a second sequence.
-     *
-     * @method intersect
-     * 
-     * @param any second The second sequence.
-     * @param any [equalityComparer] The custom equality comparer to use.
-     *
-     * @throws The second sequence and/or the equality comparer is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public intersect(second, equalityComparer) {
-        equalityComparer = toEqualityComparerSafe(equalityComparer);
+    /** @inheritdoc */
+    public intersect(second: any, equalityComparer?: any): IEnumerable<T> {
+        var ec: (x: T, y: T) => boolean = toEqualityComparerSafe(equalityComparer);
         
-        second = asEnumerable(second).distinct(equalityComparer)
+        second = asEnumerable(second).distinct(ec)
                                      .toArray();
             
-        var newItems = [];
+        var newItems: T[] = [];
             
         while (this.moveNext()) {
             var curItem = this.current;
             
             for (var i = 0; i < second.length; i++) {
                 var secondItem = second[i];
-                if (equalityComparer(curItem, secondItem)) {
+                if (ec(curItem, secondItem)) {
                     newItems.push(curItem);
                     
                     break;
@@ -1220,34 +1135,26 @@ class Sequence implements IEnumerable {
         return fromArray(newItems);
     }
 
-    /**
-     * Correlates the elements of that sequence and another based on matching keys.
-     *
-     * @method join
-     * 
-     * @param any inner The other sequence.
-     * @param any outerKeySelector The key selector for the items of that sequence.
-     * @param any innerKeySelector The key selector for the items of the other sequence.
-     * @param any resultSelector The function that provides the result value for two matching elements.
-     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
-     * 
-     * @throw At least one argument is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public join(inner,
-                                       outerKeySelector, innerKeySelector,
-                                       resultSelector,
-                                       keyEqualityComparer) {
-                                          
+    /** @inheritdoc */
+    public isValid: boolean;
+    
+    /** @inheritdoc */
+    public itemKey: any;
+
+    /** @inheritdoc */
+    public join<U>(inner: any,
+                   outerKeySelector: any, innerKeySelector: any,
+                   resultSelector: any,
+                   keyEqualityComparer?: any) {
+
         inner = asEnumerable(inner);
-        
-        resultSelector = asFunc(resultSelector);
-        keyEqualityComparer = toEqualityComparerSafe(keyEqualityComparer);
+
+        var rc: (x: T, y: T) => U = asFunc(resultSelector);
+        var kc: (x: any, y: any) => boolean = toEqualityComparerSafe(keyEqualityComparer);
 
         var createGroupsForSequence = function(seq, keySelector) {
             return seq.groupBy(keySelector)
-                      .select(function(grouping) {
+                      .select((grouping: IGrouping<any, T>) => {
                                   return {
                                       key: grouping.key,
                                       values: grouping.toArray()                                   
@@ -1267,14 +1174,14 @@ class Sequence implements IEnumerable {
             for (var ii = 0; ii < innerGroups.length; ii++) {
                 var innerGrp = innerGroups[ii];
                 
-                if (!keyEqualityComparer(outerGrp.key, innerGrp.key)) {
+                if (!kc(outerGrp.key, innerGrp.key)) {
                     continue;
                 }
                 
                 for (var iii = 0; iii < outerGrp.values.length; iii++) {
                     for (var iv = 0; iv < innerGrp.values.length; iv++) {
-                        joinedItems.push(resultSelector(outerGrp.values[iii],
-                                                        innerGrp.values[iv]));
+                        joinedItems.push(rc(outerGrp.values[iii],
+                                            innerGrp.values[iv]));
                     }
                 }
             }
@@ -1283,27 +1190,17 @@ class Sequence implements IEnumerable {
         return fromArray(joinedItems);
     }
 
-    /**
-     * Returns the last element of the sequence.
-     *
-     * @method last
-     * 
-     * @param {Function} [predicate] The custom condition to use.
-     *
-     * @throws Sequence contains no (matching) element.
-     * 
-     * @return any The last (matching) element.
-     */
-    public last(predicate) {
-        predicate = toPredicateSafe(predicate);
+    /** @inheritdoc */
+    public last(predicate?: any): any {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
         
         var index = -1;
         var lastItem;
         var found = false;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
 
-            if (predicate(ctx.item, ctx.index, ctx)) {
+            if (p(ctx.item, ctx.index, ctx)) {
                 lastItem = ctx.item;
                 found = true;
             }
@@ -1316,24 +1213,14 @@ class Sequence implements IEnumerable {
         return lastItem;
     }
 
-    /**
-     * Tries to return the last element of the sequence.
-     *
-     * @method lastOrDefault
-     * 
-     * @param {Function} [predicateOrDefaultValue] The custom condition to use.
-     *                                             If only one argument is defined and that value is NO function it will be handled as default value.  
-     * @param any [defaultValue] The (default) value to return if no matching element was found.
-     * 
-     * @return any The last (matching) element or the default value.
-     */
-    public lastOrDefault(predicateOrDefaultValue, defaultValue) {
+    /** @inheritdoc */
+    public lastOrDefault(predicateOrDefaultValue?: any, defaultValue?: any): any {
         var odObj = createObjectForOrDefaultMethod(arguments);
-        
+    
         var index = -1;
         var lastItem = odObj.defaultValue;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
             
             if (odObj.predicate(ctx.item, ctx.index, ctx)) {
                 lastItem = ctx.item;
@@ -1343,16 +1230,8 @@ class Sequence implements IEnumerable {
         return lastItem;
     }
 
-    /**
-     * Tries to return the maximum value of the sequence.
-     *
-     * @method max
-     * 
-     * @param any [defaultValue] The (default) value to return if sequence is empty.
-     * 
-     * @return any The maximum or the default value.
-     */
-    public max(defaultValue) {
+    /** @inheritdoc */
+    public max(defaultValue?: any): any {
         return this.aggregate(function(result, x) {
             if (x > result) {
                 result = x;
@@ -1362,16 +1241,8 @@ class Sequence implements IEnumerable {
         }, defaultValue);
     }
 
-    /**
-     * Tries to return the minimum value of the sequence.
-     *
-     * @method min
-     * 
-     * @param any [defaultValue] The (default) value to return if sequence is empty.
-     * 
-     * @return any The minimum or the default value.
-     */
-    public min(defaultValue) {
+    /** @inheritdoc */
+    public min(defaultValue?: any): any {
         return this.aggregate(function(result, x) {
             if (x < result) {
                 result = x;
@@ -1381,17 +1252,12 @@ class Sequence implements IEnumerable {
         }, defaultValue);
     }
 
-    /**
-     * Returns elements of a specific type.
-     *
-     * @method ofType
-     * 
-     * @param {String} type The type.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public ofType(type) {
-        type = ("" + type).replace(/^\s+|\s+$/gm, '');
+    /** @inheritdoc */
+    public abstract moveNext(): boolean;
+
+    /** @inheritdoc */
+    public ofType(type: string) {
+        type = type.replace(REGEX_TRIM, '');
         
         var checkType = function(x) {
             return typeof x === type;    
@@ -1424,112 +1290,37 @@ class Sequence implements IEnumerable {
         return this.where(checkType);
     }
 
-    /**
-     * Sorts the elements of that sequence in ascending order by using the values itself as keys.
-     * 
-     * @method order
-     * 
-     * @param any [comparer] The custom key comparer to use.
-     * 
-     * @throws The comparer is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public order(comparer) {
+    /** @inheritdoc */
+    public order(comparer?: any): IOrderedEnumerable<T> {
         return this.orderBy('x => x', comparer);
     }
 
-    /**
-     * Sorts the elements of that sequence in ascending order.
-     *
-     * @method orderBy
-     * 
-     * @param any selector The key selector.
-     * @param any [comparer] The custom key comparer to use.
-     * 
-     * @throws At least one argument is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public orderBy(selector: any, comparer?: any) : IOrderedEnumerable {
-        comparer = toComparerSafe(comparer);
-        
-        if (true === selector) {
-            selector = function(x) {
-                return x;
-            };
-        }
-        
-        selector = asFunc(selector);
-
-        var originalArray = this.toArray();
-        
-        var sortedItems = originalArray.map(function(x) {
-            return {
-                sortBy: selector(x),
-                value: x
-            };
-        }).sort(function(x, y) {
-            return comparer(x.sortBy, y.sortBy);
-        }).map(function(x) {
-            return x.value;
-        });
-
-        var orderedEnumerable : any = fromArray(sortedItems);
-        setupOrderedEnumerable(orderedEnumerable, {
-            selector: selector,
-            comparer: comparer,
-            originalItems: originalArray
-        });                                       
-        
-        return orderedEnumerable;
+    /** @inheritdoc */
+    public orderBy(selector: any, comparer?: any): IOrderedEnumerable<T> {
+        return new OrderedSequence(this, selector, comparer);
     }
 
-    /**
-     * Sorts the elements of that sequence in descending order by using the values as keys.
-     *
-     * @method orderDescending
-     * 
-     * @param any [comparer] The custom key comparer to use.
-     * 
-     * @throws The comparer is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public orderDescending(comparer) {
+    /** @inheritdoc */
+    public orderByDescending(selector: any, comparer?: any): IOrderedEnumerable<T> {
+        var c: (x: T, y: T) => number = toComparerSafe(comparer);
+    
+        return this.orderBy(selector,
+                           (x: T, y: T): number => {
+                               return c(y, x);
+                           });
+    }
+
+    /** @inheritdoc */
+    public orderDescending(comparer?: any): IOrderedEnumerable<T> {
         return this.orderByDescending('x => x', comparer);
     }
 
-    /**
-     * Sorts the elements of that sequence in descending order.
-     *
-     * @method orderByDescending
-     * 
-     * @param any selector The key selector.
-     * @param any [comparer] The custom key comparer to use.
-     * 
-     * @throws At least one argument is invalid.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public orderByDescending(selector, comparer) {
-        comparer = toComparerSafe(comparer);
-        
-        return this.orderBy(selector,
-                            function(x, y) {
-                                return comparer(y, x);
-                            });
-    }
+    /** @inheritdoc */
+    public abstract reset();
 
-    /**
-     * Reverses the order of the elements.
-     *
-     * @method reverse
-     * 
-     * @return {Object} The new sequence.
-     */
-    public reverse() {
-        var reverseItems = [];
+    /** @inheritdoc */
+    public reverse(): IEnumerable<T> {
+        var reverseItems: T[] = [];
         while (this.moveNext()) {
             reverseItems.unshift(this.current);
         }
@@ -1537,41 +1328,39 @@ class Sequence implements IEnumerable {
         return fromArray(reverseItems);
     }
 
-    /**
-     * Projects the elements of that sequence to new values.
-     *
-     * @method select
-     * 
-     * @param {Function} selector The selector.
-     *
-     * @throws Selector is no valid value for use as function.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public select(selector) {
-        this.__6C0F8FF9E35 = asFunc(selector);
-        return this;
+    /** @inheritdoc */
+    public select<U>(selector: any): IEnumerable<U> {
+        this._selector = asFunc(selector);
+        return <any>this;
     }
 
     /**
-     * Projects the elements of that sequence to new sequences that converted to one flatten sequence.
-     *
-     * @method selectMany
+     * Projects an item to another type based on the inner selector.
      * 
-     * @param {Function} selector The selector.
+     * @param {T} x The input value.
      * 
-     * @throws Selector is no valid value for use as function.
-     * 
-     * @return {Object} The new sequence.
+     * @return any The output value.
      */
-    public selectMany(selector) {
-        selector = asFunc(selector);
+    protected selectInner(x: T): any {
+        var s = this._selector;
+        if (TypeUtils.isNullOrUndefined(s)) {
+            s = (x) => x;
+        }
+
+        return s(x);
+    }
+
+    /** @inheritdoc */
+    public selectMany<U>(selector: any): IEnumerable<U> {
+        var s: (x: T, index: number, ctx: IEnumerableItemContext<T>) => any = asFunc(selector);
         
-        var flattenItems = [];
+        var flattenItems: U[] = [];
         
+        var index = -1;
         while (this.moveNext()) {
-            var items = asEnumerable(selector(this.current));
-            
+            var ctx = new EnumerableItemContext(this, ++index);
+
+            var items = asEnumerable(s(ctx.item, ctx.index, ctx));
             while (items.moveNext()) {
                 flattenItems.push(items.current);
             }
@@ -1580,61 +1369,43 @@ class Sequence implements IEnumerable {
         return fromArray(flattenItems);
     }
 
-    /**
-     * Checks if that sequence has the same elements as another one.
-     *
-     * @method take
-     * 
-     * @param any other The other sequence.
-     * @param any [equalityComparer] The custom equality comparer to use.
-     * 
-     * @throws Other sequence and/or equality comparer are invalid values.
-     * 
-     * @return {Boolean} Both sequences are the same or not
-     */
-    public sequenceEqual(other, equalityComparer) {
-        other = asEnumerable(other);
-        equalityComparer = toEqualityComparerSafe(equalityComparer);
+    /** @inheritdoc */
+    public sequenceEqual(other: any, equalityComparer?: any): boolean {
+        var o: IEnumerable<T> = asEnumerable(other);
+        var ec: (x:T, y: T) => boolean = toEqualityComparerSafe(equalityComparer);
         
         while (this.moveNext()) {
             var x = this.current;
             
-            if (!other.moveNext()) {
+            if (!o.moveNext()) {
                 return false;
             }
             
-            var y = other.current;
+            var y = o.current;
             
-            if (!equalityComparer(x, y)) {
+            if (!ec(x, y)) {
                 return false;
             }
         }
         
-        if (other.moveNext()) {
+        if (o.moveNext()) {
             return false;
         }
         
         return true;
     }
 
-    /**
-     * Returns the one and only element of the sequence.
-     *
-     * @method single
-     * 
-     * @param {Function} [predicate] The custom condition to use.
-     * 
-     * @throws Sequence contains more than one matching element or no element.
-     * 
-     * @return any The only (matching) element or the default value.
-     */
-    public single(predicate) {
-        predicate = toPredicateSafe(predicate);
+    /** @inheritdoc */
+    public single(predicate?: any): T {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
 
+        var index = -1;
         var item;
         var found = false;
         while (this.moveNext()) {
-            if (predicate(this.current)) {
+            var ctx = new EnumerableItemContext(this, ++index);
+
+            if (p(ctx.item, ctx.index, ctx)) {
                 if (found) {
                     throw "Sequence contains more that one matching element!";
                 }
@@ -1651,20 +1422,8 @@ class Sequence implements IEnumerable {
         return item;
     }
 
-    /**
-     * Tries to return the one and only element of the sequence.
-     *
-     * @method singleOrDefault
-     * 
-     * @param {Function} [predicateOrDefaultValue] The custom condition to use.
-     *                                             If only one argument is defined and that value is NO function it will be handled as default value.  
-     * @param any [defaultValue] The (default) value to return if no matching element was found.
-     * 
-     * @throws Sequence contains more than one matching element.
-     * 
-     * @return any The only (matching) element or the default value.
-     */
-    public singleOrDefault(predicateOrDefaultValue, defaultValue) {
+    /** @inheritdoc */
+    public singleOrDefault(predicateOrDefaultValue?: any, defaultValue?: any): any {
         var odObj = createObjectForOrDefaultMethod(arguments);
         
         var item = odObj.defaultValue;
@@ -1672,8 +1431,8 @@ class Sequence implements IEnumerable {
         var index = -1;
         var found = false;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
-            
+            var ctx = new EnumerableItemContext(this, ++index);
+
             if (odObj.predicate(ctx.item, ctx.index, ctx)) {
                 if (found) {
                     throw "Sequence contains more that one matching element!";
@@ -1687,16 +1446,8 @@ class Sequence implements IEnumerable {
         return item;
     }
 
-    /**
-     * Skips a number of elements.
-     *
-     * @method skip
-     * 
-     * @param {Number} cnt The number of elements to skip.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public skip(cnt) {
+    /** @inheritdoc */
+    public skip(cnt: number): IEnumerable<T> {
         return this.skipWhile(function() {
             if (cnt > 0) {
                 --cnt;
@@ -1707,28 +1458,18 @@ class Sequence implements IEnumerable {
         });
     }
 
-    /**
-     * Skips elements of that sequence while a condition matches.
-     *
-     * @method skipWhile
-     * 
-     * @param {Function} predicate The condition to use.
-     * 
-     * @throws Predicate is no valid value.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public skipWhile(predicate) {
-        var predicate = asFunc(predicate);
+    /** @inheritdoc */
+    public skipWhile(predicate: any): IEnumerable<T> {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
         
-        var newItems = [];
+        var newItems: T[] = [];
         
         var index = -1;
         var flag = false;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
             
-            if (!flag && !predicate(ctx.item, ctx.index, ctx)) {
+            if (!flag && !p(ctx.item, ctx.index, ctx)) {
                 flag = true;
             }
             
@@ -1740,31 +1481,15 @@ class Sequence implements IEnumerable {
         return fromArray(newItems);
     }
 
-    /**
-     * Calculates the sum of the elements.
-     *
-     * @method sum
-     * 
-     * @param any defaultValue The value to return if sequence is empty.
-     * 
-     * @return any The sum or the default value.
-     */
-    public sum(defaultValue) {
-        return this.aggregate(function(result, x) {
+    /** @inheritdoc */
+    public sum(defaultValue?: any): any {
+        return this.aggregate((result, x) => {
             return result + x;
         }, defaultValue);
     }
 
-    /**
-     * Takes a number of elements.
-     *
-     * @method take
-     * 
-     * @param {Number} cnt The number of elements to take.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public take(cnt) {
+    /** @inheritdoc */
+    public take(cnt: number): IEnumerable<T> {
         return this.takeWhile(function() {
             if (cnt > 0) {
                 --cnt;
@@ -1774,45 +1499,29 @@ class Sequence implements IEnumerable {
             return false;
         });
     }
-
-    /**
-     * Takes elements while a condition matches.
-     *
-     * @method takeWhile
-     * 
-     * @param {Function} predicate The condition to use.
-     * 
-     * @throws Predicate is no valid value.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public takeWhile(predicate) {
-        var predicate = asFunc(predicate);
-        
-        var newItems = [];
-        
+    
+    /** @inheritdoc */
+    public takeWhile(predicate): IEnumerable<T> {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
+    
+        var newItems: T[] = [];
+    
         var index = -1;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
-            
-            if (!predicate(ctx.item, ctx.index, ctx)) {
+            var ctx = new EnumerableItemContext(this, ++index);
+        
+            if (!p(ctx.item, ctx.index, ctx)) {
                 break;
             }
-            
+        
             newItems.push(ctx.item);
         }
-        
+    
         return fromArray(newItems);
     }
 
-    /**
-     * Returns the elements of that sequence as array.
-     * 
-     * @method toArray
-     * 
-     * @return {Array} The sequence as new array.
-     */
-    public toArray() {
+    /** @inheritdoc */
+    public toArray(): T[] {
         var arr = [];
         while (this.moveNext()) {
             arr.push(this.current);
@@ -1821,139 +1530,91 @@ class Sequence implements IEnumerable {
         return arr;
     }
 
-    /**
-     * Creates a new object from the items of that sequence.
-     *
-     * @method toObject
-     * 
-     * @param any [keySelector] The custom key selector to use.
-     * 
-     * @throws Key selector is invalid.
-     * 
-     * @return {Object} The new object.
-     */
-    public toObject(keySelector) {
+    /** @inheritdoc */
+    public toLookup(keySelector: any, keyEqualityComparer?: any): any {
+        var lu = {};
+        this.groupBy(keySelector, keyEqualityComparer)
+            .each(function(grouping: IGrouping<any, T>) {
+                      lu[grouping.key] = grouping;
+                  });
+    
+        return lu;
+    }
+
+    /** @inheritdoc */
+    public toObject(keySelector?: any): any {
         if (arguments.length < 1) {
-            keySelector = function(item, index, key) {
+            keySelector = function(x: T, index: number, key: any) {
                 return key;
             };
         }
         
-        keySelector = asFunc(keySelector);
+        var ks: (x: T, index: number, key: any) => any = asFunc(keySelector);
 
         var obj = {};
         
         this.each(function(x, index, ctx) {
-            var key = keySelector(x, index, ctx.key);
-            
+            var key = ks(x, index, ctx.key);
             obj[key] = x;
         });
         
         return obj;
     }
 
-    /**
-     * Creates a new observable object from the items of that sequence.
-     *
-     * @method toObservable
-     * 
-     * @param any [keySelector] The custom key selector to use.
-     * 
-     * @throws Key selector is invalid.
-     * 
-     * @return {Observable} The new object.
-     */
-    public toObservable(keySelector) : Observable {
+    /** @inheritdoc */
+    public toObservable(keySelector?: any): Observable {
         if (arguments.length < 1) {
-            keySelector = function(item, index, key) {
+            keySelector = function(x: T, index: number, key: any) {
                 return key;
             };
         }
         
-        keySelector = asFunc(keySelector);
+        var ks: (x: T, index: number, key: any) => any = asFunc(keySelector);
 
         var ob = new Observable();
         
         this.each(function(x, index, ctx) {
             var key = keySelector(x, index, ctx.key);
-            
             ob.set(key, x);
         });
         
         return ob;
     }
 
-    /**
-     * Creates a new observable array from the items of that sequence.
-     *
-     * @method toObservableArray
-     * 
-     * @return {ObservableArray} The new array.
-     */
-    public toObservableArray() : ObservableArray<any> {
-        return new ObservableArray<any>(this.toArray());
+    /** @inheritdoc */
+    public toObservableArray(): ObservableArray<T> {
+        return new ObservableArray(this.toArray());
     }
 
-    /**
-     * Creates a lookup object from the sequence.
-     *
-     * @method toLookup
-     * 
-     * @param any keySelector The group key selector.
-     * @param any [keyEqualityComparer] The custom equality comparer for the keys to use. 
-     * 
-     * @throw At least one argument is invalid.
-     * 
-     * @return {Object} The lookup array.
-     */
-    public toLookup(keySelector, keyEqualityComparer) {
-        var lu = {};
-        this.groupBy(keySelector, keyEqualityComparer)
-            .each(function(grouping) {
-                      lu[grouping.key] = grouping;
-                  });
-        
-        return lu;
+    /** @inheritdoc */
+    public toVirtualArray(): VirtualArray<T> {
+        var arr = this.toArray();
+
+        var va = new VirtualArray<T>(arr.length);
+        for (var i = 0; i < va.length; i++) {
+            va.setItem(i, arr[i]);
+        }
+
+        return va;
     }
 
-    /**
-     * Produces the set union of that sequence and another.
-     * 
-     * @method union
-     * 
-     * @param any second The second sequence.
-     * @param {Function} [equalityComparer] The custom equality comparer to use.
-     * 
-     * @throws Sequence or equality comparer are no valid values.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public union(second, equalityComparer) {
+    /** @inheritdoc */
+    public union(second: any, equalityComparer?: any): IEnumerable<T> {
         return this.concat(second)
                    .distinct(equalityComparer);
     }
 
-    /**
-     * Filters the elements of that sequence.
-     * 
-     * @method where
-     * 
-     * @param {Function} predicate The predicate to use.
-     * 
-     * @throws Predicate is no valid function / lambda expression.
-     * 
-     * @return {Array} The sequence as new array.
-     */
-    public where(predicate) {
-        predicate = asFunc(predicate);
+    /** @inheritdoc */
+    public where(predicate: any): IEnumerable<T> {
+        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
 
-        var filteredItems = [];
+        var filteredItems: T[] = [];
         
         var index = -1;
         while (this.moveNext()) {
-            var ctx = createEnumerableContext(this, ++index);
+            var ctx = new EnumerableItemContext(this, ++index);
             
-            if (predicate(ctx.item, ctx.index, ctx)) {
+            if (p(ctx.item, ctx.index, ctx)) {
                 filteredItems.push(ctx.item);
             }
         }
@@ -1961,36 +1622,26 @@ class Sequence implements IEnumerable {
         return fromArray(filteredItems);
     }
 
-    /**
-     * Applies a specified function to the corresponding elements of that sequence
-     * and another, producing a sequence of the results.
-     * 
-     * @method zip
-     * 
-     * @param any second The second sequence.
-     * @param {Function} selector The selector for the combined result items of the elements of the two sequences.
-     * 
-     * @throws Sequence or selector are no valid values.
-     * 
-     * @return {Object} The new sequence.
-     */
-    public zip(second, selector) {
-        second = asEnumerable(second);
-        selector = asFunc(selector);
+    /** @inheritdoc */
+    public zip<U>(second, selector): IEnumerable<U> {
+        var snd: IEnumerable<T> = asEnumerable(second);
+        var s: (x: T, y: T,
+                index: number,
+                cX: IEnumerableItemContext<T>, cY: IEnumerableItemContext<T>) => U = asFunc(selector);
         
-        var zippedItems = [];
+        var zippedItems: U[] = [];
         
         var index = -1;
-        while (this.moveNext() && second.moveNext()) {
+        while (this.moveNext() && snd.moveNext()) {
             ++index;
             
-            var ctx1 = createEnumerableContext(this, index);
-            var ctx2 = createEnumerableContext(second, index);
+            var ctx1 = new EnumerableItemContext(this, index);
+            var ctx2 = new EnumerableItemContext(snd, index);
             
-            var zipped = selector(ctx1.item, ctx2.item,
-                                  index,
-                                  ctx1, ctx2);
-                                  
+            var zipped = s(ctx1.item, ctx2.item,
+                           index,
+                           ctx1, ctx2);
+                                
             zippedItems.push(zipped);
         }
         
@@ -1998,105 +1649,551 @@ class Sequence implements IEnumerable {
     }
 }
 
-// ---------- ordered enumerable method templates ----------
+class ArrayEnumerable<T> extends Sequence<T> implements IEnumerable<T> {
+    protected _arr: T[] | ObservableArray<T> | VirtualArray<T> | IArguments | string;
+    protected _getter: (index: number) => T;
+    protected _index;
 
-/**
- * Performs a subsequent ordering of the elements in that sequence in ascending order,
- * using the values itself as keys.
- * 
- * @method then
- * 
- * @param any [comparer] The custom key comparer to use.
- * 
- * @throws The comparer is invalid.
- * 
- * @return {Object} The new sequence.
- */
-orderedEnumerableMethods.then = function(comparer) {
-    return this.thenBy('x => x', comparer);
-};
+    constructor(arr: T[] | ObservableArray<T> | VirtualArray<T> | IArguments | string,
+                getter: (index: number) => T) {
 
-/**
- * Performs a subsequent ordering of the elements in that sequence in ascending order, according to a key.
- * 
- * @method thenBy
- * 
- * @param any selector The key selector.
- * @param any [comparer] The custom key comparer to use.
- * 
- * @throws At least one argument is invalid.
- * 
- * @return {Object} The new sequence.
- */
-orderedEnumerableMethods.thenBy = function(selector, comparer) {
-    comparer = toComparerSafe(comparer);
-    
-    if (true === selector) {
-        selector = function(x) {
-            return x;
-        };
+        super();
+
+        this._arr = arr;
+        this._getter = getter;
+
+        this.reset();
     }
 
-    selector = asFunc(selector);
-    var thisSelector = this.__0CDF3D959A20;
+    protected getCurrent(): any {
+        return this.selectInner(this._getter(this._index));
+    }
+
+    public get isValid(): boolean {
+        return (this._index + 1) < this._arr.length;
+    }
+
+    public get itemKey(): number {
+        return this._index;
+    }
+
+    public moveNext(): boolean {
+        if (this.isValid) {
+            ++this._index;
+            return true;
+        }
+
+        return false;
+    }
+
+    public reset() {
+        this._index = -1;
+    }
+}
+
+class EnumerableItemContext<T> implements IEnumerableItemContext<T> {
+    private _index: number;
+    private _seq: IEnumerable<T>;
     
-    var thisComparer = this.__559048F1;
+    constructor(seq: IEnumerable<T>, index?: number) {
+        this._seq = seq;
+    }
+
+    public get index(): number {
+        return this._index;
+    }
+
+    public get item(): T {
+        return this._seq.current;
+    }
+
+    public get key(): any {
+        return this._seq.itemKey;
+    }
+
+    public get sequence(): IEnumerable<T> {
+        return this._seq;
+    }
+}
+
+/**
+ * A grouping.
+ */
+export class Grouping<K, T> extends Sequence<T> implements IGrouping<K, T> {
+    private _key: K;
+    private _seq: IEnumerable<T>;
     
-    return fromArray(this.__A922635A1BF2)
-        .orderBy(function(x) {
-                     return {
-                        level_0: thisSelector(x),
-                        level_1: selector(x)
-                     };
-                 },
-                 function(x, y) {
-                     var comp0 = thisComparer(x.level_0, y.level_0);
-                     if (0 != comp0) {
-                         return comp0;
-                     }
-                     
-                     var comp1 = comparer(x.level_1, y.level_1);
-                     if (0 != comp1) {
-                         return comp1;
-                     }
-                     
-                     return 0;
-                 });
+    /**
+     * Initializes a new instance of that class.
+     * 
+     * @param {K} key The key.
+     * @param {IEnumerable} seq The items of the grouping.
+     */
+    constructor(key: K, seq: IEnumerable<T>) {
+        super();
+    }
+
+    /** @inheritdoc */
+    protected getCurrent(): T {
+        return this.selectInner(this._seq.current);
+    }
+
+    /** @inheritdoc */
+    public get isValid(): boolean {
+        return this._seq.isValid;
+    }
+
+    /** @inheritdoc */
+    public get key(): K {
+        return this._key;
+    }
+
+    /** @inheritdoc */
+    public moveNext(): boolean {
+        return this._seq.moveNext();
+    }
+
+    /** @inheritdoc */
+    public reset() {
+        return this._seq.reset();
+    }
+}
+
+class ObjectEnumerable extends Sequence<any> {
+    private _index: number;
+    private _obj: any;
+    private _properties: any[];
+
+    constructor(obj: any) {
+        super();
+
+        this._properties = [];
+        for (var p in obj) {
+            this._properties.push(p);
+        }
+
+        this.reset();
+    }
+
+    protected getCurrent(): any {
+        return this._obj[this.itemKey];
+    }
+
+    public get isValid(): boolean {
+        return (this._index + 1) < this._properties.length;
+    }
+
+    public get itemKey(): number {
+        return this._properties[this._index];
+    }
+
+    public moveNext(): boolean {
+        if (this.isValid) {
+            ++this._index;
+            return true;
+        }
+
+        return false;
+    }
+
+    public reset() {
+        this._index = -1;
+    }
+}
+
+/**
+ * An ordered sequence.
+ */
+export class OrderedSequence<T> extends Sequence<T> implements IOrderedEnumerable<T> {
+    private _items: IEnumerable<T>;
+    private _originalItems: T[];
+    private _orderComparer: (x: any, y: any) => number;
+    private _orderSelector: (x: T) => any;
+
+    /**
+     * Initializes a new instance of that class.
+     * 
+     * @param {IEnumerable} seq The source sequence.
+     * @param {Function} selector The selector for the sort values.
+     * @param {Function} comparer The comparer to use.
+     */
+    constructor(seq: IEnumerable<T>, selector: any, comparer: any) {
+        super();
+
+        var me = this;
+
+        this._orderComparer = toComparerSafe(comparer);
+
+        if (true === selector) {
+            selector = x => x;
+        }
+
+        this._selector = asFunc(selector);
+
+        this._originalItems = seq.toArray();
+
+        this._items = fromArray(this._originalItems.map(function(x: T) {
+            return {
+                sortBy: me.selector(x),
+                value: x
+            };
+        }).sort(function(x: { sortBy: any, value: T },
+                         y: { sortBy: any, value: T }) {
+            
+            return me.comparer(x.sortBy, y.sortBy);
+        }).map(function(x: { sortBy: any, value: T }) {
+            return x.value;
+        }));
+    }
+
+    /**
+     * Gets the comparer.
+     */
+    public get comparer(): (x: any, y: any) => number {
+        return this._orderComparer;
+    }
+
+    /** @inheritdoc */
+    protected getCurrent(): T {
+        return this._items.current;
+    }
+
+    /** @inheritdoc */
+    public moveNext(): boolean {
+        return this._items
+                   .moveNext();
+    }
+
+    /** @inheritdoc */
+    public reset() {
+        return this._items.reset();
+    }
+
+    /**
+     * Gets the selector.
+     */
+    public get selector(): (x: T) => any {
+        return this._orderSelector;
+    }
+
+    /** @inheritdoc */
+    public then(comparer?: any): IOrderedEnumerable<T> {
+        return this.thenBy('x => x', comparer);
+    }
+
+    /** @inheritdoc */
+    public thenBy(selector: any, comparer?: any): IOrderedEnumerable<T> {
+        var c: (x: any, y: any) => number = toComparerSafe(comparer);
+    
+        if (true === selector) {
+            selector = x => x;
+        }
+
+        selector = asFunc(selector);
+
+        var thisSelector = this._orderSelector;
+        var thisComparer = this._orderComparer;
+    
+        return fromArray(this._originalItems)
+            .orderBy((x: T): { level_0: any, level_1: any } => {
+                        return {
+                            level_0: thisSelector(x),
+                            level_1: selector(x),
+                        };
+                    },
+                    function(x: { level_0: any, level_1: any }, 
+                             y: { level_0: any, level_1: any }): number {
+                        
+                        var comp0 = thisComparer(x.level_0, y.level_0);
+                        if (0 != comp0) {
+                            return comp0;
+                        }
+                        
+                        var comp1 = c(x.level_1, y.level_1);
+                        if (0 != comp1) {
+                            return comp1;
+                        }
+                        
+                        return 0;
+                    });
+    }
+
+    /** @inheritdoc */
+    public thenByDescending(selector: any, comparer?: any): IOrderedEnumerable<T> {
+        var c: (x: T, y: T) => number = toComparerSafe(comparer);
+    
+        return this.thenBy(selector,
+                           (x: T, y: T): number => {
+                               return comparer(y, x);
+                           });
+    }
+
+    /** @inheritdoc */
+    public thenDescending(comparer?: any): IOrderedEnumerable<T> {
+        return this.thenByDescending('x => x', comparer);
+    }
+}
+
+
+/**
+ * Returns a value as sequence.
+ * 
+ * @param any v The input value.
+ * @param {Boolean} [throwException] Throws an exception if input value is no valid value.
+ * 
+ * @throws Invalid value.
+ * 
+ * @return any The value as sequence or (false) if input value is no valid object.
+ */
+export function asEnumerable(v: any, throwException: boolean = true): IEnumerable<any> {
+    if ((v instanceof Array) || 
+        (v instanceof ObservableArray) ||
+        !v) {
+        
+        return fromArray(v);
+    }
+    
+    if (isEnumerable(v)) {
+        return v;
+    }
+    
+    if (typeof v === 'string') {
+        var charArray = [];
+        for (var i = 0; i < v.length; i++) {
+            charArray.push(v[i]);
+        }
+        
+        return fromArray(charArray);
+    }
+    
+    if (typeof v === 'object') {
+        return fromObject(v);
+    }
+    
+    // at this point we have no valid value to use as sequence
+
+    if (throwException) {
+        throw "'" + v + "' is no valid value to use as sequence!";    
+    }
+    
+    return <any>false;
+}
+
+/**
+ * Returns a value as function.
+ * 
+ * @param any v The value to convert. Can be a function or a string that is handled as lambda expression.
+ * @param {Boolean} [throwException] Throw an exception if value is no valid function or not.
+ * 
+ * @throws Value is no valid function / lambda expression.
+ * 
+ * @return {Function} Value as function or (false) if value is invalid.
+ */
+export function asFunc(v: any, throwException: boolean = true): () => any {
+    if (typeof v === "function") {
+        return v;
+    }
+
+    if (!v) {
+        return v;
+    }
+    
+    // now handle as lambda...
+
+    var lambda = "" + v;
+    
+    var matches = lambda.match(/^(\s*)([\(]?)([^\)]*)([\)]?)(\s*)(=>)/m);
+    if (matches) {
+        if ((("" === matches[2]) && ("" !== matches[4])) ||
+            (("" !== matches[2]) && ("" === matches[4]))) {
+            
+            if (throwException) {
+                throw "Syntax error in '" + lambda + "' expression!";
+            }
+            
+            return null;
+        }
+        
+        var lambdaBody = lambda.substr(matches[0].length)
+                               .replace(/^[\s|{|}]+|[\s|{|}]+$/g, '');  // trim
+        
+        if ("" !== lambdaBody) {
+            if (';' !== lambdaBody.substr(-1)) {
+                lambdaBody = 'return ' + lambdaBody + ';';
+            }
+        }
+        
+        var func;
+        eval('func = function(' + matches[3] + ') { ' + lambdaBody + ' };');
+
+        return func;
+    }
+    
+    if (throwException) {
+        throw "'" + v + "' is NO valid lambda expression!";
+    }
+
+    return <any>false;
+}
+
+
+/**
+ * Creates a new sequence from a list of values.
+ * 
+ * @param any ...items One or more item to add.
+ * 
+ * @return {IEnumerable} The new sequence.
+ */
+export function create<T>(...items: any[]): IEnumerable<T> {
+    return fromArray<T>(items);
+}
+
+function createObjectForOrDefaultMethod<T>(args: IArguments): { defaultValue?: any,
+                                                                predicate?: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean } {
+    var odObj: any = {
+        predicate: () => true,
+    };
+    
+    if (args.length > 0) {
+        if (args.length < 2) {
+            var func = asFunc(args[0], false);
+            
+            if (typeof func !== "function") {
+                odObj.defaultValue = args[0];
+            }
+            else {
+                odObj.predicate = func;
+            }
+        }
+        else {
+            odObj.predicate = asFunc(args[0]);
+            odObj.defaultValue = args[1];
+        }
+    }
+    
+    return odObj;
+}
+
+/**
+ * Creates a new sequence from an array.
+ * 
+ * @param {Array} arr The array.
+ * 
+ * @return {IEnumerable} The new sequence.
+ */
+export function fromArray<T>(arr?: T[] | ObservableArray<T> | VirtualArray<T> | IArguments | string): IEnumerable<T> {
+    if (arguments.length < 1) {
+        arr = [];
+    }
+
+    var getter: (index: number) => T;
+    if ((arr instanceof ObservableArray) ||
+        (arr instanceof VirtualArray)) {
+
+        getter = (i) => arr.getItem(i);
+    }
+    else {
+        getter = (i) => arr[i];
+    }
+
+    return new ArrayEnumerable<T>(arr, getter);
+}
+
+/**
+ * Creates a new sequence from an object.
+ * 
+ * @param {Object} obj The object.
+ * 
+ * @return {Sequence} The new sequence.
+ */
+export function fromObject(obj?: any): IEnumerable<any> {
+    if (arguments.length < 1) {
+        obj = {};
+    }
+
+    return new ObjectEnumerable(obj);
+}
+
+/**
+ * Checks if a value is a sequence.
+ * 
+ * @param any v The value to check.
+ * 
+ * @return {Boolean} Is sequence or not.
+ */
+export function isEnumerable(v: any) {
+    return v instanceof Sequence;
+}
+
+/**
+ * Returns a value as comparer.
+ * 
+ * @param any predicate The input value.
+ * 
+ * @throws Input value is no valid function / lambda expression.
+ * 
+ * @return {Function} Input value as comparer.
+ */
+export function toComparerSafe(comparer) {
+    comparer = asFunc(comparer);
+
+    if (TypeUtils.isNullOrUndefined(comparer)) {
+        return function(x, y) {
+            if (x < y) {
+                return -1;
+            }
+            
+            if (x > y) {
+                return 1;
+            }
+            
+            return 0;
+        };
+    }
+    
+    return comparer;
 };
 
 /**
- * Performs a subsequent ordering of the elements in that sequence in descending order, according to a key.
+ * Returns a value as equality comparer.
  * 
- * @method thenByDescending
+ * @param any equalityComparer The input value.
  * 
- * @param any selector The key selector.
- * @param any [comparer] The custom key comparer to use.
+ * @throws Input value is no valid function / lambda expression.
  * 
- * @throws At least one argument is invalid.
- * 
- * @return {Object} The new sequence.
+ * @return {Function} Input value as equality comparer.
  */
-orderedEnumerableMethods.thenByDescending = function(selector, comparer) {
-    comparer = toComparerSafe(comparer);
+export function toEqualityComparerSafe(equalityComparer: any) {
+    if (true === equalityComparer) {
+        return function(x, y) {
+            return x === y;    
+        };
+    }
     
-    return this.thenBy(selector,
-                       function(x, y) {
-                           return comparer(y, x);
-                       });
-};
+    equalityComparer = asFunc(equalityComparer);
+
+    if (TypeUtils.isNullOrUndefined(equalityComparer)) {
+        return function(x, y) {
+            return x == y;
+        };
+    }
+    
+    return equalityComparer;
+}
 
 /**
- * Performs a subsequent ordering of the elements in that sequence in descending order,
- * using the values as keys.
+ * Returns a value as predicate.
  * 
- * @method thenDescending
+ * @param any predicate The input value.
  * 
- * @param any [comparer] The custom key comparer to use.
+ * @throws Input value is no valid function / lambda expression.
  * 
- * @throws The comparer is invalid.
- * 
- * @return {Object} The new sequence.
+ * @return {Function} Input value as predicate.
  */
-orderedEnumerableMethods.thenDescending = function(selector, comparer) {
-    return this.thenByDescending('x => x', comparer);
-};
+export function toPredicateSafe(predicate) {
+    if (TypeUtils.isNullOrUndefined(predicate)) {
+        predicate = () => true;
+    }
+    
+    return asFunc(predicate);
+}
