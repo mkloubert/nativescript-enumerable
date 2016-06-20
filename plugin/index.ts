@@ -506,7 +506,7 @@ export interface IEnumerable<T> {
      * 
      * @return {IEnumerable} The new sequence.
      */
-    takeWhile(predicate): IEnumerable<T>;
+    takeWhile(predicate: any): IEnumerable<T>;
 
     /**
      * Returns the elements of that sequence as array.
@@ -597,7 +597,7 @@ export interface IEnumerable<T> {
      * 
      * @return {IEnumerable} The new sequence.
      */
-    zip<U>(second, selector): IEnumerable<U>;
+    zip<U>(second: any, selector: any): IEnumerable<U>;
 }
 
 /**
@@ -607,7 +607,7 @@ export interface IEnumerableItemContext<T> {
     /**
      * Gets or sets if operation should be cancelled or not.
      */
-    cancel: boolean;
+    cancel?: boolean;
 
     /**
      * Gets the zero based index.
@@ -693,7 +693,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     protected _selector: (x: T) => any;
 
     /** @inheritdoc */
-    public aggregate(accumulator: any, defaultValue?) {
+    public aggregate(accumulator: any, defaultValue?: any) {
         var acc: (result: any, x: T, index: number, ctx: IEnumerableItemContext<T>) => any = asFunc(accumulator);
         
         var index = -1;
@@ -1561,7 +1561,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     }
     
     /** @inheritdoc */
-    public takeWhile(predicate): IEnumerable<T> {
+    public takeWhile(predicate: any): IEnumerable<T> {
         predicate = asFunc(predicate);
     
         var newItems: T[] = [];
@@ -1691,7 +1691,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     }
 
     /** @inheritdoc */
-    public zip<U>(second, selector): IEnumerable<U> {
+    public zip<U>(second: any, selector: any): IEnumerable<U> {
         second = asEnumerable(second);
         selector = asFunc(selector);
         
