@@ -95,7 +95,7 @@ instead.
 
 ## Documentation
 
-The full documentation with all functions and methods can be found on [readme.io](https://nativescript-enumerable.readme.io/docs).
+Take a look at the [plugin/index.js](https://github.com/mkloubert/nativescript-enumerable/blob/master/plugin/index.js) file to get detailed information about all methods (search for `enumerable method templates`).
 
 ## Demo app
 

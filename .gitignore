@@ -1,5 +1,5 @@
 /demo/platforms
 /demo/node_modules
-/pushall.sh
 /plugin/*.map
+/pushall.sh
 /demo/app/*.map
