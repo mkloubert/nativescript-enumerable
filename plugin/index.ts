@@ -72,7 +72,7 @@ export interface IEnumerable<T> {
      * @return {Boolean} At least one element was found that matches the condition.
      *                   If condition is not defined, the method checks if sequence contains at least one element.
      */
-    any(predicate: any): boolean;
+    any(predicate?: any): boolean;
 
     /**
      * Computes the average of that sequence.
@@ -395,7 +395,7 @@ export interface IEnumerable<T> {
      *
      * @method reverse
      * 
-     * @return {IEnumerable} The new sequence.
+     * @return {IOrderedEnumerable} The new sequence.
      */
     reverse(): IEnumerable<T>;
 
@@ -559,7 +559,7 @@ export interface IEnumerable<T> {
     /**
      * Creates a new virtual array from the items of that sequence.
      * 
-     * @return {ObservableArray} The new array.
+     * @return {VirtualArray} The new array.
      */
     toVirtualArray(): VirtualArray<T>;
 
@@ -604,6 +604,11 @@ export interface IEnumerable<T> {
  * Describes the context of a current sequence item.
  */
 export interface IEnumerableItemContext<T> {
+    /**
+     * Gets or sets if operation should be cancelled or not.
+     */
+    cancel: boolean;
+
     /**
      * Gets the zero based index.
      */
@@ -705,6 +710,10 @@ export abstract class Sequence<T> implements IEnumerable<T> {
                 aggResult = ctx.item;
                 isFirst = false;
             }
+
+            if (ctx.cancel) {
+                break;
+            }
         }
         
         return aggResult;
@@ -712,14 +721,18 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public all(predicate: any): boolean {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
+        predicate = asFunc(predicate);
         
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext<T>(this, ++index);
 
-            if (!p(ctx.item, ctx.index, ctx)) {
+            if (!predicate(ctx.item, ctx.index, ctx)) {
                 return false;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -727,15 +740,19 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     }
 
     /** @inheritdoc */
-    public any(predicate: any): boolean {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
+    public any(predicate?: any): boolean {
+        predicate = toPredicateSafe(predicate);
         
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext<T>(this, ++index);
 
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 return true;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -759,7 +776,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     public cast(type: string): IEnumerable<any> {
         if (type !== null) {
             if (TypeUtils.isUndefined(type)) {
-                type = "";
+                type = '';
             }
             else {
                 type = type.replace(REGEX_TRIM, '');
@@ -864,22 +881,26 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public contains(item: T, equalityComparer?: any): boolean {
-        var ec: (x: T, y: T) => boolean = toEqualityComparerSafe(equalityComparer);
+        equalityComparer = toEqualityComparerSafe(equalityComparer);
         
-        return this.any((x: T) => ec(x, item));
+        return this.any((x: T) => equalityComparer(x, item));
     }
 
     /** @inheritdoc */
     public count(predicate?: any): number {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
 
         var index = -1;
         var cnt = 0;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
 
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 ++cnt;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -902,7 +923,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public distinct(equalityComparer?: any): IEnumerable<T> {
-        var ec: (x: T, y: T) => boolean = toEqualityComparerSafe(equalityComparer);
+        equalityComparer = toEqualityComparerSafe(equalityComparer);
         
         var distinctedItems: T[] = [];
         
@@ -911,7 +932,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
             
             var alreadyInList = false;
             for (var i = 0; i < distinctedItems.length; i++) {
-                if (ec(curItem, distinctedItems[i])) {
+                if (equalityComparer(curItem, distinctedItems[i])) {
                     alreadyInList = true;
                     break;
                 }
@@ -927,14 +948,18 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public each(action: any): any {
-        var a: (x: T, index: number, ctx: IEnumerableItemContext<T>) => any = asFunc(action);
+        action = asFunc(action);
     
         var index = -1;
         var result;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
             
-            result = a(ctx.item, ctx.index, ctx);
+            result = action(ctx.item, ctx.index, ctx);
+
+            if (ctx.cancel) {
+                break;
+            }
         }
         
         return result;
@@ -985,14 +1010,18 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public first(predicate?: any): T {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
         
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
             
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 return ctx.item;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -1009,6 +1038,10 @@ export abstract class Sequence<T> implements IEnumerable<T> {
             
             if (odObj.predicate(ctx.item, ctx.index, ctx)) {
                 return ctx.item;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -1054,6 +1087,10 @@ export abstract class Sequence<T> implements IEnumerable<T> {
             }
             
             grp.values.push(ctx.item);
+
+            if (ctx.cancel) {
+                break;
+            }
         }
         
         return fromArray(groupList.map((x: { key: any, values: T[] }) => {
@@ -1191,7 +1228,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public last(predicate?: any): any {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
         
         var index = -1;
         var lastItem;
@@ -1199,9 +1236,13 @@ export abstract class Sequence<T> implements IEnumerable<T> {
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
 
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 lastItem = ctx.item;
                 found = true;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -1223,6 +1264,10 @@ export abstract class Sequence<T> implements IEnumerable<T> {
             
             if (odObj.predicate(ctx.item, ctx.index, ctx)) {
                 lastItem = ctx.item;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
 
@@ -1351,7 +1396,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public selectMany<U>(selector: any): IEnumerable<U> {
-        var s: (x: T, index: number, ctx: IEnumerableItemContext<T>) => any = asFunc(selector);
+        selector = asFunc(selector);
         
         var flattenItems: U[] = [];
         
@@ -1359,9 +1404,13 @@ export abstract class Sequence<T> implements IEnumerable<T> {
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
 
-            var items = asEnumerable(s(ctx.item, ctx.index, ctx));
+            var items = asEnumerable(selector(ctx.item, ctx.index, ctx));
             while (items.moveNext()) {
                 flattenItems.push(items.current);
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -1396,7 +1445,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public single(predicate?: any): T {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
 
         var index = -1;
         var item;
@@ -1404,13 +1453,17 @@ export abstract class Sequence<T> implements IEnumerable<T> {
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
 
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 if (found) {
                     throw "Sequence contains more that one matching element!";
                 }
                 
                 item = this.current;
                 found = true;
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -1440,6 +1493,10 @@ export abstract class Sequence<T> implements IEnumerable<T> {
                 item = this.current;
                 found = true;
             }
+
+            if (ctx.cancel) {
+                break;
+            }
         }
 
         return item;
@@ -1459,7 +1516,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public skipWhile(predicate: any): IEnumerable<T> {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
+        predicate = asFunc(predicate);
         
         var newItems: T[] = [];
         
@@ -1468,12 +1525,16 @@ export abstract class Sequence<T> implements IEnumerable<T> {
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
             
-            if (!flag && !p(ctx.item, ctx.index, ctx)) {
+            if (!flag && !predicate(ctx.item, ctx.index, ctx)) {
                 flag = true;
             }
             
             if (flag) {
                 newItems.push(ctx.item);
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -1501,7 +1562,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     
     /** @inheritdoc */
     public takeWhile(predicate): IEnumerable<T> {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
+        predicate = asFunc(predicate);
     
         var newItems: T[] = [];
     
@@ -1509,11 +1570,15 @@ export abstract class Sequence<T> implements IEnumerable<T> {
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
         
-            if (!p(ctx.item, ctx.index, ctx)) {
+            if (!predicate(ctx.item, ctx.index, ctx)) {
                 break;
             }
         
             newItems.push(ctx.item);
+
+            if (ctx.cancel) {
+                break;
+            }
         }
     
         return fromArray(newItems);
@@ -1605,7 +1670,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public where(predicate: any): IEnumerable<T> {
-        var p: (x: T, index: number, ctx: IEnumerableItemContext<T>) => boolean = asFunc(predicate);
+        predicate = asFunc(predicate);
 
         var filteredItems: T[] = [];
         
@@ -1613,8 +1678,12 @@ export abstract class Sequence<T> implements IEnumerable<T> {
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
             
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 filteredItems.push(ctx.item);
+            }
+
+            if (ctx.cancel) {
+                break;
             }
         }
         
@@ -1623,25 +1692,27 @@ export abstract class Sequence<T> implements IEnumerable<T> {
 
     /** @inheritdoc */
     public zip<U>(second, selector): IEnumerable<U> {
-        var snd: IEnumerable<T> = asEnumerable(second);
-        var s: (x: T, y: T,
-                index: number,
-                cX: IEnumerableItemContext<T>, cY: IEnumerableItemContext<T>) => U = asFunc(selector);
+        second = asEnumerable(second);
+        selector = asFunc(selector);
         
         var zippedItems: U[] = [];
         
         var index = -1;
-        while (this.moveNext() && snd.moveNext()) {
+        while (this.moveNext() && second.moveNext()) {
             ++index;
             
             var ctx1 = new EnumerableItemContext(this, index);
-            var ctx2 = new EnumerableItemContext(snd, index);
+            var ctx2 = new EnumerableItemContext(second, index);
             
-            var zipped = s(ctx1.item, ctx2.item,
-                           index,
-                           ctx1, ctx2);
+            var zipped = selector(ctx1.item, ctx2.item,
+                                  index,
+                                  ctx1, ctx2);
                                 
             zippedItems.push(zipped);
+
+            if (ctx1.cancel || ctx2.cancel) {
+                break;
+            }
         }
         
         return fromArray(zippedItems);
@@ -1698,6 +1769,8 @@ class EnumerableItemContext<T> implements IEnumerableItemContext<T> {
         this._seq = seq;
         this._index = index;
     }
+
+    public cancel: boolean = false;
 
     public get index(): number {
         return this._index;
@@ -1985,7 +2058,7 @@ export function asEnumerable(v: any, throwException: boolean = true): IEnumerabl
  * 
  * @return {Function} Value as function or (false) if value is invalid.
  */
-export function asFunc(v: any, throwException: boolean = true): () => any {
+export function asFunc(v: any, throwException: boolean = true): any {
     if (typeof v === "function") {
         return v;
     }
@@ -2029,7 +2102,7 @@ export function asFunc(v: any, throwException: boolean = true): () => any {
         throw "'" + v + "' is NO valid lambda expression!";
     }
 
-    return <any>false;
+    return false;
 }
 
 
@@ -2136,6 +2209,73 @@ export function isEnumerable(v: any): boolean {
 }
 
 /**
+ * Creates a sequence with a range of items.
+ * 
+ * @param any start The start value.
+ * @param {Number} cnt The number of items to return.
+ * @param any [incrementor] The custom function (or value) that increments the current value.
+ * 
+ * @return {Object} The new sequence.
+ */
+function range(start: number, cnt: number, incrementor?: any): IEnumerable<number> {
+    if (arguments.length < 3) {
+        incrementor = (x): number => {
+            return x + 1;
+        };
+    }
+    else {
+        var funcOrValue = asFunc(incrementor, false);
+        if (false === funcOrValue) {
+            var incrementBy = incrementor;
+        
+            incrementor = (x): number => {
+                return x + incrementBy;
+            };
+        }
+        else {
+            incrementor = funcOrValue;
+        }
+    }
+
+    var numbers: number[] = [];
+    
+    var remainingCnt = cnt;
+    var val: number = start;
+    while (remainingCnt > 0) {
+        numbers.push(val);
+        
+        val = incrementor(val, {
+            remainingCount: remainingCnt,
+            startValue: start,
+            totalCount: cnt
+        });
+        
+        --remainingCnt;
+    }
+    
+    return fromArray(numbers);
+}
+
+/**
+ * Creates a sequence with a number of specific values.
+ * 
+ * @param any v The value.
+ * @param {Number} cnt The number of items to return.
+ * 
+ * @return {Object} The new sequence.
+ */
+function repeat<T>(v: T, cnt: number): IEnumerable<T> {
+    var items: T[] = [];
+
+    while (cnt > 0) {
+        items.push(v);
+        --cnt;
+    }
+    
+    return fromArray(items);
+}
+
+/**
  * Short hand version for 'order(By)' methods of a sequence.
  * 
  * @param items any The sequence of items to iterate.
@@ -2174,7 +2314,7 @@ export function sortDesc<T>(items: any, comparer?: any, selector?: any): IOrdere
  * 
  * @return {Function} Input value as comparer.
  */
-export function toComparerSafe(comparer) {
+export function toComparerSafe(comparer: any) {
     comparer = asFunc(comparer);
 
     if (TypeUtils.isNullOrUndefined(comparer)) {
@@ -2230,7 +2370,7 @@ export function toEqualityComparerSafe(equalityComparer: any) {
  * 
  * @return {Function} Input value as predicate.
  */
-export function toPredicateSafe(predicate) {
+export function toPredicateSafe(predicate: any) {
     if (TypeUtils.isNullOrUndefined(predicate)) {
         predicate = () => true;
     }

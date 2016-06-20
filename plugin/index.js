@@ -50,29 +50,38 @@ var Sequence = (function () {
                 aggResult = ctx.item;
                 isFirst = false;
             }
+            if (ctx.cancel) {
+                break;
+            }
         }
         return aggResult;
     };
     /** @inheritdoc */
     Sequence.prototype.all = function (predicate) {
-        var p = asFunc(predicate);
+        predicate = asFunc(predicate);
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (!p(ctx.item, ctx.index, ctx)) {
+            if (!predicate(ctx.item, ctx.index, ctx)) {
                 return false;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return true;
     };
     /** @inheritdoc */
     Sequence.prototype.any = function (predicate) {
-        var p = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 return true;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return false;
@@ -92,7 +101,7 @@ var Sequence = (function () {
     Sequence.prototype.cast = function (type) {
         if (type !== null) {
             if (TypeUtils.isUndefined(type)) {
-                type = "";
+                type = '';
             }
             else {
                 type = type.replace(exports.REGEX_TRIM, '');
@@ -176,18 +185,21 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.contains = function (item, equalityComparer) {
-        var ec = toEqualityComparerSafe(equalityComparer);
-        return this.any(function (x) { return ec(x, item); });
+        equalityComparer = toEqualityComparerSafe(equalityComparer);
+        return this.any(function (x) { return equalityComparer(x, item); });
     };
     /** @inheritdoc */
     Sequence.prototype.count = function (predicate) {
-        var p = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
         var index = -1;
         var cnt = 0;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 ++cnt;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return cnt;
@@ -213,13 +225,13 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.distinct = function (equalityComparer) {
-        var ec = toEqualityComparerSafe(equalityComparer);
+        equalityComparer = toEqualityComparerSafe(equalityComparer);
         var distinctedItems = [];
         while (this.moveNext()) {
             var curItem = this.current;
             var alreadyInList = false;
             for (var i = 0; i < distinctedItems.length; i++) {
-                if (ec(curItem, distinctedItems[i])) {
+                if (equalityComparer(curItem, distinctedItems[i])) {
                     alreadyInList = true;
                     break;
                 }
@@ -232,12 +244,15 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.each = function (action) {
-        var a = asFunc(action);
+        action = asFunc(action);
         var index = -1;
         var result;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            result = a(ctx.item, ctx.index, ctx);
+            result = action(ctx.item, ctx.index, ctx);
+            if (ctx.cancel) {
+                break;
+            }
         }
         return result;
     };
@@ -277,12 +292,15 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.first = function (predicate) {
-        var p = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 return ctx.item;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         throw "Sequence contains NO element!";
@@ -295,6 +313,9 @@ var Sequence = (function () {
             var ctx = new EnumerableItemContext(this, ++index);
             if (odObj.predicate(ctx.item, ctx.index, ctx)) {
                 return ctx.item;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return odObj.defaultValue;
@@ -324,6 +345,9 @@ var Sequence = (function () {
                 groupList.push(grp);
             }
             grp.values.push(ctx.item);
+            if (ctx.cancel) {
+                break;
+            }
         }
         return fromArray(groupList.map(function (x) {
             return new Grouping(x.key, asEnumerable(x.values));
@@ -415,15 +439,18 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.last = function (predicate) {
-        var p = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
         var index = -1;
         var lastItem;
         var found = false;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 lastItem = ctx.item;
                 found = true;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         if (!found) {
@@ -440,6 +467,9 @@ var Sequence = (function () {
             var ctx = new EnumerableItemContext(this, ++index);
             if (odObj.predicate(ctx.item, ctx.index, ctx)) {
                 lastItem = ctx.item;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return lastItem;
@@ -538,14 +568,17 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.selectMany = function (selector) {
-        var s = asFunc(selector);
+        selector = asFunc(selector);
         var flattenItems = [];
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            var items = asEnumerable(s(ctx.item, ctx.index, ctx));
+            var items = asEnumerable(selector(ctx.item, ctx.index, ctx));
             while (items.moveNext()) {
                 flattenItems.push(items.current);
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return fromArray(flattenItems);
@@ -571,18 +604,21 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.single = function (predicate) {
-        var p = toPredicateSafe(predicate);
+        predicate = toPredicateSafe(predicate);
         var index = -1;
         var item;
         var found = false;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 if (found) {
                     throw "Sequence contains more that one matching element!";
                 }
                 item = this.current;
                 found = true;
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         if (!found) {
@@ -605,6 +641,9 @@ var Sequence = (function () {
                 item = this.current;
                 found = true;
             }
+            if (ctx.cancel) {
+                break;
+            }
         }
         return item;
     };
@@ -620,17 +659,20 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.skipWhile = function (predicate) {
-        var p = asFunc(predicate);
+        predicate = asFunc(predicate);
         var newItems = [];
         var index = -1;
         var flag = false;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (!flag && !p(ctx.item, ctx.index, ctx)) {
+            if (!flag && !predicate(ctx.item, ctx.index, ctx)) {
                 flag = true;
             }
             if (flag) {
                 newItems.push(ctx.item);
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return fromArray(newItems);
@@ -653,15 +695,18 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.takeWhile = function (predicate) {
-        var p = asFunc(predicate);
+        predicate = asFunc(predicate);
         var newItems = [];
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (!p(ctx.item, ctx.index, ctx)) {
+            if (!predicate(ctx.item, ctx.index, ctx)) {
                 break;
             }
             newItems.push(ctx.item);
+            if (ctx.cancel) {
+                break;
+            }
         }
         return fromArray(newItems);
     };
@@ -732,29 +777,35 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.where = function (predicate) {
-        var p = asFunc(predicate);
+        predicate = asFunc(predicate);
         var filteredItems = [];
         var index = -1;
         while (this.moveNext()) {
             var ctx = new EnumerableItemContext(this, ++index);
-            if (p(ctx.item, ctx.index, ctx)) {
+            if (predicate(ctx.item, ctx.index, ctx)) {
                 filteredItems.push(ctx.item);
+            }
+            if (ctx.cancel) {
+                break;
             }
         }
         return fromArray(filteredItems);
     };
     /** @inheritdoc */
     Sequence.prototype.zip = function (second, selector) {
-        var snd = asEnumerable(second);
-        var s = asFunc(selector);
+        second = asEnumerable(second);
+        selector = asFunc(selector);
         var zippedItems = [];
         var index = -1;
-        while (this.moveNext() && snd.moveNext()) {
+        while (this.moveNext() && second.moveNext()) {
             ++index;
             var ctx1 = new EnumerableItemContext(this, index);
-            var ctx2 = new EnumerableItemContext(snd, index);
-            var zipped = s(ctx1.item, ctx2.item, index, ctx1, ctx2);
+            var ctx2 = new EnumerableItemContext(second, index);
+            var zipped = selector(ctx1.item, ctx2.item, index, ctx1, ctx2);
             zippedItems.push(zipped);
+            if (ctx1.cancel || ctx2.cancel) {
+                break;
+            }
         }
         return fromArray(zippedItems);
     };
@@ -800,6 +851,7 @@ var ArrayEnumerable = (function (_super) {
 }(Sequence));
 var EnumerableItemContext = (function () {
     function EnumerableItemContext(seq, index) {
+        this.cancel = false;
         this._seq = seq;
         this._index = index;
     }
@@ -1204,6 +1256,63 @@ function isEnumerable(v) {
     return v instanceof Sequence;
 }
 exports.isEnumerable = isEnumerable;
+/**
+ * Creates a sequence with a range of items.
+ *
+ * @param any start The start value.
+ * @param {Number} cnt The number of items to return.
+ * @param any [incrementor] The custom function (or value) that increments the current value.
+ *
+ * @return {Object} The new sequence.
+ */
+function range(start, cnt, incrementor) {
+    if (arguments.length < 3) {
+        incrementor = function (x) {
+            return x + 1;
+        };
+    }
+    else {
+        var funcOrValue = asFunc(incrementor, false);
+        if (false === funcOrValue) {
+            var incrementBy = incrementor;
+            incrementor = function (x) {
+                return x + incrementBy;
+            };
+        }
+        else {
+            incrementor = funcOrValue;
+        }
+    }
+    var numbers = [];
+    var remainingCnt = cnt;
+    var val = start;
+    while (remainingCnt > 0) {
+        numbers.push(val);
+        val = incrementor(val, {
+            remainingCount: remainingCnt,
+            startValue: start,
+            totalCount: cnt
+        });
+        --remainingCnt;
+    }
+    return fromArray(numbers);
+}
+/**
+ * Creates a sequence with a number of specific values.
+ *
+ * @param any v The value.
+ * @param {Number} cnt The number of items to return.
+ *
+ * @return {Object} The new sequence.
+ */
+function repeat(v, cnt) {
+    var items = [];
+    while (cnt > 0) {
+        items.push(v);
+        --cnt;
+    }
+    return fromArray(items);
+}
 /**
  * Short hand version for 'order(By)' methods of a sequence.
  *
