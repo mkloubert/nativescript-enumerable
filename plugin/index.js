@@ -1147,6 +1147,20 @@ function createObjectForOrDefaultMethod(args) {
     return odObj;
 }
 /**
+ * Short hand version for 'each' method of a sequence.
+ *
+ * @param items any The sequence of items to iterate.
+ * @param action any The action to invoke for each item.
+ *
+ * @throws At least one argument is invalid.
+ *
+ * @return any The result of the last invocation.
+ */
+function each(items, action) {
+    return asEnumerable(items).each(action);
+}
+exports.each = each;
+/**
  * Creates a new sequence from an array.
  *
  * @param {Array} arr The array.
@@ -1193,6 +1207,36 @@ function isEnumerable(v) {
     return v instanceof Sequence;
 }
 exports.isEnumerable = isEnumerable;
+/**
+ * Short hand version for 'order(By)' methods of a sequence.
+ *
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ *
+ * @throws At least one argument is invalid.
+ *
+ * @return {IOrderedEnumerable} The sequences with the sorted items.
+ */
+function sort(items, comparer, selector) {
+    return asEnumerable(items).orderBy(selector, comparer);
+}
+exports.sort = sort;
+/**
+ * Short hand version for 'order(By)Descending' methods of a sequence.
+ *
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ *
+ * @throws At least one argument is invalid.
+ *
+ * @return {IOrderedEnumerable} The sequences with the sorted items.
+ */
+function sortDesc(items, comparer, selector) {
+    return asEnumerable(items).orderByDescending(selector, comparer);
+}
+exports.sortDesc = sortDesc;
 /**
  * Returns a value as comparer.
  *

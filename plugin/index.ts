@@ -2075,6 +2075,20 @@ function createObjectForOrDefaultMethod<T>(args: IArguments): { defaultValue?: a
 }
 
 /**
+ * Short hand version for 'each' method of a sequence.
+ * 
+ * @param items any The sequence of items to iterate.
+ * @param action any The action to invoke for each item.
+ * 
+ * @throws At least one argument is invalid.
+ * 
+ * @return any The result of the last invocation.
+ */
+export function each(items: any, action: any): any {
+    return asEnumerable(items).each(action);
+}
+
+/**
  * Creates a new sequence from an array.
  * 
  * @param {Array} arr The array.
@@ -2121,8 +2135,38 @@ export function fromObject(obj?: any): IEnumerable<any> {
  * 
  * @return {Boolean} Is sequence or not.
  */
-export function isEnumerable(v: any) {
+export function isEnumerable(v: any): boolean {
     return v instanceof Sequence;
+}
+
+/**
+ * Short hand version for 'order(By)' methods of a sequence.
+ * 
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ * 
+ * @throws At least one argument is invalid.
+ * 
+ * @return {IOrderedEnumerable} The sequences with the sorted items.
+ */
+export function sort<T>(items, comparer?: any, selector?: any): IOrderedEnumerable<T> {
+    return asEnumerable(items).orderBy(selector, comparer);
+}
+
+/**
+ * Short hand version for 'order(By)Descending' methods of a sequence.
+ * 
+ * @param items any The sequence of items to iterate.
+ * @param [comparer] any The custom comparer to use.
+ * @param [selector] any The custom key selector to use.
+ * 
+ * @throws At least one argument is invalid.
+ * 
+ * @return {IOrderedEnumerable} The sequences with the sorted items.
+ */
+export function sortDesc<T>(items: any, comparer?: any, selector?: any): IOrderedEnumerable<T> {
+    return asEnumerable(items).orderByDescending(selector, comparer);
 }
 
 /**
