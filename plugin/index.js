@@ -164,7 +164,6 @@ var Sequence = (function () {
     };
     /** @inheritdoc */
     Sequence.prototype.concat = function (second) {
-        second = asEnumerable(second);
         var newItems = [];
         var appendItems = function (seq) {
             while (seq.moveNext()) {
@@ -172,7 +171,7 @@ var Sequence = (function () {
             }
         };
         appendItems(this);
-        appendItems(second);
+        appendItems(asEnumerable(second));
         return fromArray(newItems);
     };
     /** @inheritdoc */
@@ -327,7 +326,7 @@ var Sequence = (function () {
             grp.values.push(ctx.item);
         }
         return fromArray(groupList.map(function (x) {
-            return new Grouping(x.key, x.values);
+            return new Grouping(x.key, asEnumerable(x.values));
         }));
     };
     /** @inheritdoc */
@@ -530,12 +529,12 @@ var Sequence = (function () {
      *
      * @return any The output value.
      */
-    Sequence.prototype.selectInner = function (x) {
+    Sequence.prototype.selectInner = function (item) {
         var s = this._selector;
         if (TypeUtils.isNullOrUndefined(s)) {
             s = function (x) { return x; };
         }
-        return s(x);
+        return s(item);
     };
     /** @inheritdoc */
     Sequence.prototype.selectMany = function (selector) {
@@ -708,7 +707,7 @@ var Sequence = (function () {
         var ks = asFunc(keySelector);
         var ob = new observable_1.Observable();
         this.each(function (x, index, ctx) {
-            var key = keySelector(x, index, ctx.key);
+            var key = ks(x, index, ctx.key);
             ob.set(key, x);
         });
         return ob;
@@ -771,7 +770,7 @@ var ArrayEnumerable = (function (_super) {
         this.reset();
     }
     ArrayEnumerable.prototype.getCurrent = function () {
-        return this.selectInner(this._getter(this._index));
+        return this._getter(this._index);
     };
     Object.defineProperty(ArrayEnumerable.prototype, "isValid", {
         get: function () {
@@ -802,6 +801,7 @@ var ArrayEnumerable = (function (_super) {
 var EnumerableItemContext = (function () {
     function EnumerableItemContext(seq, index) {
         this._seq = seq;
+        this._index = index;
     }
     Object.defineProperty(EnumerableItemContext.prototype, "index", {
         get: function () {
@@ -846,10 +846,12 @@ var Grouping = (function (_super) {
      */
     function Grouping(key, seq) {
         _super.call(this);
+        this._key = key;
+        this._seq = seq;
     }
     /** @inheritdoc */
     Grouping.prototype.getCurrent = function () {
-        return this.selectInner(this._seq.current);
+        return this._seq.current;
     };
     Object.defineProperty(Grouping.prototype, "isValid", {
         /** @inheritdoc */
@@ -936,7 +938,7 @@ var OrderedSequence = (function (_super) {
         if (true === selector) {
             selector = function (x) { return x; };
         }
-        this._selector = asFunc(selector);
+        this._orderSelector = asFunc(selector);
         this._originalItems = seq.toArray();
         this._items = fromArray(this._originalItems.map(function (x) {
             return {
@@ -1039,20 +1041,15 @@ exports.OrderedSequence = OrderedSequence;
  */
 function asEnumerable(v, throwException) {
     if (throwException === void 0) { throwException = true; }
-    if ((v instanceof Array) ||
-        (v instanceof observable_array_1.ObservableArray) ||
-        !v) {
-        return fromArray(v);
-    }
     if (isEnumerable(v)) {
         return v;
     }
-    if (typeof v === 'string') {
-        var charArray = [];
-        for (var i = 0; i < v.length; i++) {
-            charArray.push(v[i]);
-        }
-        return fromArray(charArray);
+    if ((v instanceof Array) ||
+        (v instanceof observable_array_1.ObservableArray) ||
+        (v instanceof virtual_array_1.VirtualArray) ||
+        (typeof v === 'string') ||
+        !v) {
+        return fromArray(v);
     }
     if (typeof v === 'object') {
         return fromObject(v);

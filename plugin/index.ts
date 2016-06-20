@@ -221,7 +221,7 @@ export interface IEnumerable<T> {
      * 
      * @return {IEnumerable} The new sequence.
      */
-    groupBy<K>(keySelector, keyEqualityComparer): IEnumerable<IGrouping<K, T>>;
+    groupBy<K>(keySelector: any, keyEqualityComparer?: any): IEnumerable<IGrouping<K, T>>;
 
     /**
      * Correlates the elements of that sequence and another based on matching keys and groups them.
@@ -847,19 +847,17 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     }
 
     /** @inheritdoc */
-    public concat(second: any): IEnumerable<T> {
-        second = asEnumerable(second);
-            
+    public concat(second: any): IEnumerable<T> {  
         var newItems: T[] = [];
         
-        var appendItems = function(seq) {
+        var appendItems = function(seq: IEnumerable<T>) {
             while (seq.moveNext()) {
                 newItems.push(seq.current);
             }
         };
         
         appendItems(this);
-        appendItems(second);
+        appendItems(asEnumerable(second));
         
         return fromArray(newItems);
     }
@@ -1025,7 +1023,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
     protected abstract getCurrent(): any;
 
     /** @inheritdoc */
-    public groupBy<K>(keySelector, keyEqualityComparer): IEnumerable<IGrouping<K, T>> {
+    public groupBy<K>(keySelector: any, keyEqualityComparer?: any): IEnumerable<IGrouping<K, T>> {
         var ks: (x: T, index: number, ctx: IEnumerableItemContext<T>) => K = asFunc(keySelector);
         var kc: (x: K, y: K) => boolean = toEqualityComparerSafe(keyEqualityComparer);
         
@@ -1058,8 +1056,9 @@ export abstract class Sequence<T> implements IEnumerable<T> {
             grp.values.push(ctx.item);
         }
         
-        return fromArray(groupList.map((x) => {
-            return new Grouping<K, T>(x.key, x.values);
+        return fromArray(groupList.map((x: { key: any, values: T[] }) => {
+            return new Grouping<K, T>(x.key,
+                                      asEnumerable(x.values));
         }));
     }
 
@@ -1341,13 +1340,13 @@ export abstract class Sequence<T> implements IEnumerable<T> {
      * 
      * @return any The output value.
      */
-    protected selectInner(x: T): any {
+    protected selectInner(item: T): any {
         var s = this._selector;
         if (TypeUtils.isNullOrUndefined(s)) {
             s = (x) => x;
         }
 
-        return s(x);
+        return s(item);
     }
 
     /** @inheritdoc */
@@ -1574,7 +1573,7 @@ export abstract class Sequence<T> implements IEnumerable<T> {
         var ob = new Observable();
         
         this.each(function(x, index, ctx) {
-            var key = keySelector(x, index, ctx.key);
+            var key = ks(x, index, ctx.key);
             ob.set(key, x);
         });
         
@@ -1666,7 +1665,7 @@ class ArrayEnumerable<T> extends Sequence<T> implements IEnumerable<T> {
     }
 
     protected getCurrent(): any {
-        return this.selectInner(this._getter(this._index));
+        return this._getter(this._index);
     }
 
     public get isValid(): boolean {
@@ -1697,6 +1696,7 @@ class EnumerableItemContext<T> implements IEnumerableItemContext<T> {
     
     constructor(seq: IEnumerable<T>, index?: number) {
         this._seq = seq;
+        this._index = index;
     }
 
     public get index(): number {
@@ -1731,11 +1731,14 @@ export class Grouping<K, T> extends Sequence<T> implements IGrouping<K, T> {
      */
     constructor(key: K, seq: IEnumerable<T>) {
         super();
+
+        this._key = key;
+        this._seq = seq;
     }
 
     /** @inheritdoc */
     protected getCurrent(): T {
-        return this.selectInner(this._seq.current);
+        return this._seq.current;
     }
 
     /** @inheritdoc */
@@ -1828,7 +1831,7 @@ export class OrderedSequence<T> extends Sequence<T> implements IOrderedEnumerabl
             selector = x => x;
         }
 
-        this._selector = asFunc(selector);
+        this._orderSelector = asFunc(selector);
 
         this._originalItems = seq.toArray();
 
@@ -1946,26 +1949,19 @@ export class OrderedSequence<T> extends Sequence<T> implements IOrderedEnumerabl
  * @return any The value as sequence or (false) if input value is no valid object.
  */
 export function asEnumerable(v: any, throwException: boolean = true): IEnumerable<any> {
-    if ((v instanceof Array) || 
-        (v instanceof ObservableArray) ||
-        !v) {
-        
-        return fromArray(v);
-    }
-    
     if (isEnumerable(v)) {
         return v;
     }
     
-    if (typeof v === 'string') {
-        var charArray = [];
-        for (var i = 0; i < v.length; i++) {
-            charArray.push(v[i]);
-        }
+    if ((v instanceof Array) || 
+        (v instanceof ObservableArray) ||
+        (v instanceof VirtualArray) ||
+        (typeof v === 'string') ||
+        !v) {
         
-        return fromArray(charArray);
+        return fromArray(v);
     }
-    
+
     if (typeof v === 'object') {
         return fromObject(v);
     }

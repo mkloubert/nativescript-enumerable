@@ -738,7 +738,7 @@ var res2 = Enumerable.create()
     .singleOrDefault();
 
 var res3 = Enumerable.create(11, 22)
-    .single('x => x > 11');
+    .singleOrDefault('x => x > 11');
     
 var res4 = Enumerable.create(111, 222, 333)
     .singleOrDefault('x => x > 333');

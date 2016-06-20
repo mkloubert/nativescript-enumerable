@@ -10,7 +10,11 @@
     }
   },
   "dependencies": {
+    "nativescript-dev-typescript": "^0.3.2",
     "nativescript-enumerable": "file:..\\plugin",
     "tns-core-modules": "2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^1.8.10"
   }
 }
