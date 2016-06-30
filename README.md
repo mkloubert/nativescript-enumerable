@@ -7,6 +7,10 @@ A [NativeScript](https://nativescript.org/) module providing [LINQ](https://en.w
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=YA4RCT6FQX28J)
 
+## NativeScript Toolbox
+
+This module is part of [nativescript-toolbox](https://github.com/mkloubert/nativescript-toolbox).
+
 ## License
 
 [MIT license](https://raw.githubusercontent.com/mkloubert/nativescript-enumerable/master/LICENSE)
