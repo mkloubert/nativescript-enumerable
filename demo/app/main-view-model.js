@@ -766,6 +766,41 @@ seq.each(function(x) {
 });
 `
     });
+
+    // skipLast()
+    methods.push({
+        title: 'skipLast()',
+        sourceCode: `        
+var seq1 = Enumerable.create(0, 1, 2, 3, 4)
+    .skipLast();
+var seq2 = Enumerable.create(11, 22)
+    .skipLast();
+var seq3 = Enumerable.create(333)
+    .skipLast();
+var seq4 = Enumerable.create()
+    .skipLast();
+    
+printLine('seq1:');
+seq1.each(function(x) {
+    printLine(x);    
+});
+
+printLine('seq2:');
+seq2.each(function(x) {
+    printLine(x);
+});
+
+printLine('seq3:');
+seq3.each(function(x) {
+    printLine(x);    
+});
+
+printLine('seq4:');
+seq4.each(function(x) {
+    printLine(x);    
+});
+`
+    });
     
     // skipWhile()
     methods.push({
