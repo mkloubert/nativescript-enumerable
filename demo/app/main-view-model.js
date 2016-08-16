@@ -614,6 +614,32 @@ seq.each(function(x) {
 });
 `
     });
+
+    // pushToArray()
+    methods.push({
+        title: 'pushToArray()',
+        sourceCode: `
+var arr1 = [];
+Enumerable
+    .create(1, 2, 3)
+    .pushToArray(arr1);
+
+var arr2 = new ObservableArray();
+Enumerable
+    .create('MK', 'TM')
+    .pushToArray(arr2);
+
+for (var i = 0; i < arr1.length; i++) {
+    printLine('arr1[' + i + '] = ' + arr1[i]);
+}
+
+printLine();
+
+for (var i = 0; i < arr2.length; i++) {
+    printLine('arr2[' + i + '] = ' + arr2.getItem(i));
+}
+`
+    });
     
     // reverse()
     methods.push({

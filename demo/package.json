@@ -6,13 +6,13 @@
   "nativescript": {
     "id": "org.nativescript.NativeScriptEnumerableDemo",
     "tns-android": {
-      "version": "2.1.1"
+      "version": "2.2.0"
     }
   },
   "dependencies": {
     "nativescript-dev-typescript": "^0.3.2",
     "nativescript-enumerable": "file:..\\plugin",
-    "tns-core-modules": "^2.1.0"
+    "tns-core-modules": "^2.2.0"
   },
   "devDependencies": {
     "babel-traverse": "6.12.0",
