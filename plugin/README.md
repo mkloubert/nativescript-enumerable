@@ -59,7 +59,7 @@ var seq5 = Enumerable.repeat('TM', 50979);
 ### Work with them
 
 ```typescript
-import seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279);
+var seq = Enumerable.create(5979, 23979, null, '23979', 1781, 241279);
 
 var newSeq = seq.where((x) => x !== null)  // remove all elements that are (null)
                 .skip(1)  // skip one element (5979)
